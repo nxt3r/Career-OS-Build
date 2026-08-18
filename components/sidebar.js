@@ -7,7 +7,7 @@ export function createSidebar() {
     <h1>Career OS</h1>
 
     <button id="navDashboard">Dashboard</button>
-    <button>Time OS</button>
+    <button id="navTimer">Time OS</button>
     <button>Projects</button>
     <button>Skills</button>
     <button>Career</button>
@@ -17,4 +17,7 @@ export function createSidebar() {
   document
     .getElementById("navDashboard")
     .addEventListener("click", () => navigate("dashboard"));
+    document
+  .getElementById("navTimer")
+  .addEventListener("click", () => navigate("timer"));
 }

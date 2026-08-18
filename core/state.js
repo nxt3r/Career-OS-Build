@@ -1,3 +1,3 @@
-{`import { loadData } from "./storage.js";
+import { loadData } from "./storage.js";
 
-export const state = loadData();`}
+export const state = loadData();

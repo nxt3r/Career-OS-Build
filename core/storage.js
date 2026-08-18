@@ -1,27 +1,29 @@
-{`const KEY = "careerOS";
+const KEY = "careerOS";
 
-export function loadData(){
+const defaultData = {
+  sessions: [],
+  projects: [
+    { id: 1, name: "Career OS" },
+    { id: 2, name: "Fixtional" },
+    { id: 3, name: "React Learning" }
+  ],
+  skills: [],
+  tasks: [],
+  weeklyGoals: {
+    deepWork: 20,
+    reelsLimit: 3
+  }
+};
 
-    const raw = localStorage.getItem(KEY);
+export function loadData() {
+  const raw = localStorage.getItem(KEY);
 
-    if(raw) return JSON.parse(raw);
+  if (raw) return JSON.parse(raw);
 
-    const fresh = {
-
-        sessions:[],
-        projects:[],
-        skills:[],
-        tasks:[],
-        weeklyGoals:{}
-
-    };
-
-    saveData(fresh);
-
-    return fresh;
-
+  localStorage.setItem(KEY, JSON.stringify(defaultData));
+  return defaultData;
 }
 
-export function saveData(data){
-    localStorage.setItem(KEY, JSON.stringify(data));
-}`}
+export function saveData(data) {
+  localStorage.setItem(KEY, JSON.stringify(data));
+}

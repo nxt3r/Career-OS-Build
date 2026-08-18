@@ -1,0 +1,11 @@
+# Dependencies
+node_modules/
+
+# VS Code local settings
+.vscode/
+
+# macOS junk
+.DS_Store
+
+# Log files
+*.log
