@@ -4,9 +4,15 @@ import {
   loadRoute
 } from "./router.js";
 
+import {
+  initKeyboard
+} from "./keyboard.js";
+
 console.log("App booted");
 
 createSidebar();
+
+initKeyboard();
 
 /*
  * Load the current route when Career OS starts
