@@ -99,18 +99,26 @@ export function renderTimer(app) {
 
 }
 
-function renderSessions(){
+function renderSessions() {
 
   const list = document.getElementById("sessionList");
 
-  if(state.sessions.length === 0){
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-    list.innerHTML = "No sessions yet.";
+  const todaySessions = state.sessions.filter(session => {
+    const sessionDate = new Date(session.start);
+    sessionDate.setHours(0, 0, 0, 0);
+
+    return sessionDate.getTime() === today.getTime();
+  });
+
+  if (todaySessions.length === 0) {
+    list.innerHTML = "No sessions today.";
     return;
-
   }
 
-  list.innerHTML = state.sessions
+  list.innerHTML = todaySessions
     .map(s => `
       <div class="session">
         <strong>${s.project}</strong><br>

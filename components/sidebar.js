@@ -1,23 +1,60 @@
-import { navigate } from "../core/router.js";
+import { goTo } from "../core/router.js";
 
 export function createSidebar() {
-  const sidebar = document.getElementById("sidebar");
+
+  const sidebar =
+    document.getElementById("sidebar");
 
   sidebar.innerHTML = `
     <h1>Career OS</h1>
 
-    <button id="navDashboard">Dashboard</button>
-    <button id="navTimer">Time OS</button>
-    <button>Projects</button>
-    <button>Skills</button>
-    <button>Career</button>
-    <button>Reviews</button>
+    <button id="navDashboard">
+      Dashboard
+    </button>
+
+    <button id="navTimer">
+      Time OS
+    </button>
+
+    <button id="navProjects">
+      Projects
+    </button>
+
+    <button>
+      Skills
+    </button>
+
+    <button>
+      Career
+    </button>
+
+    <button>
+      Reviews
+    </button>
   `;
+
 
   document
     .getElementById("navDashboard")
-    .addEventListener("click", () => navigate("dashboard"));
-    document
-  .getElementById("navTimer")
-  .addEventListener("click", () => navigate("timer"));
+    .addEventListener(
+      "click",
+      () => goTo("dashboard")
+    );
+
+
+  document
+    .getElementById("navTimer")
+    .addEventListener(
+      "click",
+      () => goTo("timer")
+    );
+
+
+  document
+    .getElementById("navProjects")
+    .addEventListener(
+      "click",
+      () => goTo("projects")
+    );
+
 }
