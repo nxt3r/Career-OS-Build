@@ -2,6 +2,10 @@ import { loadData, saveData } from "./storage.js";
 
 export const state = loadData();
 
+if (!state.activeTimer) {
+  state.activeTimer = null;
+}
+
 /*
  * DEVELOPMENT DATA MIGRATION
  *
