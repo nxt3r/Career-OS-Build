@@ -2,182 +2,680 @@ import { state } from "../../core/state.js";
 import { saveData } from "../../core/storage.js";
 
 let openedProject = null;
+let projectFilter = "All";
+
+
+/*
+ * PROJECT LAB
+ */
 
 export function renderProjects(app) {
+
+  /*
+   * DEVELOPMENT MIGRATION
+   *
+   * Projects created before the archived lifecycle
+   * existed may have status === "Archived".
+   *
+   * Convert those safely.
+   */
+
+  state.projects.forEach(project => {
+
+    if (typeof project.archived !== "boolean") {
+
+      project.archived =
+        project.status === "Archived";
+
+    }
+
+    /*
+     * Archived is no longer a normal status.
+     * Give old archived projects a sensible
+     * workflow status while keeping them archived.
+     */
+
+    if (
+      project.archived &&
+      project.status === "Archived"
+    ) {
+
+      project.status = "Planning";
+
+    }
+
+  });
+
+  saveData(state);
+
 
   app.innerHTML = `
     <section>
 
       <h2>Project Lab</h2>
 
+
+      <!-- PROJECT FILTERS -->
+
+      <div class="project-filters">
+
+        <button
+          id="addProjectBtn"
+        >
+          + New Project
+        </button>
+
+
+        <button
+          class="project-filter ${
+            projectFilter === "All"
+              ? "active"
+              : ""
+          }"
+          data-filter="All"
+        >
+          All
+        </button>
+
+
+        <button
+          class="project-filter ${
+            projectFilter === "Active"
+              ? "active"
+              : ""
+          }"
+          data-filter="Active"
+        >
+          Active
+        </button>
+
+
+        <button
+          class="project-filter ${
+            projectFilter === "Planning"
+              ? "active"
+              : ""
+          }"
+          data-filter="Planning"
+        >
+          Planning
+        </button>
+
+
+        <button
+          class="project-filter ${
+            projectFilter === "Paused"
+              ? "active"
+              : ""
+          }"
+          data-filter="Paused"
+        >
+          Paused
+        </button>
+
+
+        <button
+          class="project-filter ${
+            projectFilter === "Completed"
+              ? "active"
+              : ""
+          }"
+          data-filter="Completed"
+        >
+          Completed
+        </button>
+
+
+        <button
+          class="project-filter ${
+            projectFilter === "Archived"
+              ? "active"
+              : ""
+          }"
+          data-filter="Archived"
+        >
+          Archived
+        </button>
+
+      </div>
+
+
       <div id="projectList"></div>
 
     </section>
   `;
 
+
   renderList();
 
+  attachProjectFilters();
+
+  attachProjectManagementEvents();
+
 }
+
+
+/*
+ * RENDER PROJECT LIST
+ */
 
 function renderList() {
 
   const container =
     document.getElementById("projectList");
 
-  container.innerHTML = state.projects
-    .map(project => {
+  if (!container) return;
 
-      const hours =
-        getProjectHours(project.id);
 
-      const progress =
-        getProgress(project);
+  /*
+   * FILTER PROJECTS
+   */
 
-      const expanded =
-        openedProject === project.id;
+  const visibleProjects =
+    projectFilter === "Archived"
 
-      return `
-        <div class="project-card">
+      ? state.projects.filter(
+          project =>
+            project.archived === true
+        )
 
-          <!-- PROJECT HEADER -->
+      : projectFilter === "All"
+
+        ? state.projects.filter(
+            project =>
+              project.archived !== true
+          )
+
+        : state.projects.filter(
+            project =>
+              project.archived !== true &&
+              project.status === projectFilter
+          );
+
+
+  /*
+   * EMPTY STATE
+   */
+
+  if (visibleProjects.length === 0) {
+
+    container.innerHTML = `
+      <div class="project-empty">
+
+        <p>
+          No projects in this section.
+        </p>
+
+      </div>
+    `;
+
+    return;
+
+  }
+
+
+  /*
+   * PROJECT CARDS
+   */
+
+  container.innerHTML =
+    visibleProjects
+      .map(project => {
+
+        const hours =
+          getProjectHours(project.id);
+
+        const progress =
+          getProgress(project);
+
+        const expanded =
+          openedProject === project.id;
+
+
+        return `
           <div
-            class="project-header"
-            data-id="${project.id}"
+            class="
+              project-card
+              ${
+                project.archived
+                  ? "archived-project"
+                  : ""
+              }
+            "
           >
 
-            <div>
 
-  <h3>${project.name}</h3>
+            <!-- PROJECT HEADER -->
 
-  <small>
-    ${hours.toFixed(1)}h logged
-  </small>
+            <div
+              class="project-header"
+              data-id="${project.id}"
+            >
 
-  <div class="project-mini-progress">
+              <div>
 
-    <div class="project-mini-progress-bar">
-
-      <div
-        class="project-mini-progress-fill"
-        style="width:${progress}%"
-      ></div>
-
-    </div>
-
-    <small>
-      ${progress}% complete
-    </small>
-
-  </div>
-
-</div>
-
-            <div class="project-right">
-
-              <span class="status ${project.status.toLowerCase()}">
-                ${project.status}
-              </span>
-
-              <span class="expand-icon">
-                ${expanded ? "−" : "+"}
-              </span>
-
-            </div>
-
-          </div>
+                <h3>
+                  ${project.name}
+                </h3>
 
 
-          <!-- EXPANDED PROJECT BODY -->
-          ${
-            expanded
-              ? `
-                <div class="project-body">
-
-                  <p>
-                    ${project.description}
-                  </p>
+                <small>
+                  ${hours.toFixed(1)}h logged
+                </small>
 
 
-                  <!-- MILESTONE PROGRESS -->
-                  <strong>
-                    Milestone Progress
-                  </strong>
+                <!-- MINI PROGRESS -->
 
-                  <div class="progress">
+                <div
+                  class="project-mini-progress"
+                >
+
+                  <div
+                    class="project-mini-progress-bar"
+                  >
 
                     <div
-                      class="fill green"
-                      style="width:${progress}%"
+                      class="project-mini-progress-fill"
+                      style="
+                        width:${progress}%
+                      "
                     ></div>
 
                   </div>
+
 
                   <small>
                     ${progress}% complete
                   </small>
 
+                </div>
 
-                  <hr>
-
-
-                  <!-- PROJECT TABS -->
-                  <div class="project-tabs">
-
-                    <button>
-                      Overview
-                    </button>
-
-                    <button>
-                      Tasks
-                    </button>
-
-                    <button>
-                      Inbox
-                    </button>
-
-                  </div>
+              </div>
 
 
-                  <!-- MILESTONES -->
-                  <h4>
-                    Milestones
-                  </h4>
+              <div class="project-right">
 
-                  <div class="milestone-list">
+                <span
+                  class="
+                    status
+                    ${project.status.toLowerCase()}
+                  "
+                >
+                  ${project.status}
+                </span>
+
+
+                ${
+                  project.archived
+                    ? `
+                      <span
+                        class="archived-label"
+                      >
+                        Archived
+                      </span>
+                    `
+                    : ""
+                }
+
+
+                <span
+                  class="expand-icon"
+                >
+                  ${
+                    expanded
+                      ? "−"
+                      : "+"
+                  }
+                </span>
+
+              </div>
+
+            </div>
+
+
+            <!-- EXPANDED BODY -->
+
+            ${
+              expanded
+                ? `
+                  <div
+                    class="project-body"
+                  >
+
+
+                    <!-- DESCRIPTION -->
+
+                    <p>
+                      ${
+                        project.description ||
+                        "No description."
+                      }
+                    </p>
+
+
+                    <!-- PROJECT MANAGEMENT -->
 
                     ${
-                      project.milestones
-                        .map(milestone => `
-                          <label class="milestone">
+                      project.archived
 
-                            <input
-                              type="checkbox"
-                              data-project="${project.id}"
-                              data-id="${milestone.id}"
-                              ${milestone.done ? "checked" : ""}
+                        ? `
+
+                          <div
+                            class="
+                              project-status-control
+                              archived-status
+                            "
+                          >
+
+                            <strong>
+                              Status:
+                            </strong>
+
+                            <span
+                              class="
+                                status
+                                ${project.status.toLowerCase()}
+                              "
                             >
-
-                            <span>
-                              ${milestone.title}
+                              ${project.status}
                             </span>
 
-                          </label>
-                        `)
-                        .join("")
+                          </div>
+
+
+                          <div
+                            class="project-actions"
+                          >
+
+                            <button
+                              class="restore-project"
+                              data-project="${project.id}"
+                            >
+                              Restore Project
+                            </button>
+
+                          </div>
+
+                        `
+
+                        : `
+
+                          <div
+                            class="project-status-control"
+                          >
+
+                            <label
+                              for="status-${project.id}"
+                            >
+                              Project Status
+                            </label>
+
+
+                            <select
+                              id="status-${project.id}"
+                              class="project-status"
+                              data-project="${project.id}"
+                            >
+
+                              <option
+                                value="Planning"
+                                ${
+                                  project.status ===
+                                  "Planning"
+                                    ? "selected"
+                                    : ""
+                                }
+                              >
+                                Planning
+                              </option>
+
+
+                              <option
+                                value="Active"
+                                ${
+                                  project.status ===
+                                  "Active"
+                                    ? "selected"
+                                    : ""
+                                }
+                              >
+                                Active
+                              </option>
+
+
+                              <option
+                                value="Paused"
+                                ${
+                                  project.status ===
+                                  "Paused"
+                                    ? "selected"
+                                    : ""
+                                }
+                              >
+                                Paused
+                              </option>
+
+
+                              <option
+                                value="Completed"
+                                ${
+                                  project.status ===
+                                  "Completed"
+                                    ? "selected"
+                                    : ""
+                                }
+                              >
+                                Completed
+                              </option>
+
+                            </select>
+
+                          </div>
+
+
+                          <div
+                            class="project-actions"
+                          >
+
+                            <button
+                              class="edit-project"
+                              data-project="${project.id}"
+                            >
+                              Rename Project
+                            </button>
+
+
+                            <button
+                              class="archive-project"
+                              data-project="${project.id}"
+                            >
+                              Archive Project
+                            </button>
+
+                          </div>
+
+                        `
                     }
 
+
+                    <!-- PROGRESS -->
+
+                    <strong>
+                      Milestone Progress
+                    </strong>
+
+
+                    <div
+                      class="progress"
+                    >
+
+                      <div
+                        class="fill green"
+                        style="
+                          width:${progress}%
+                        "
+                      ></div>
+
+                    </div>
+
+
+                    <small>
+                      ${progress}% complete
+                    </small>
+
+
+                    <hr>
+
+
+                    <!-- PROJECT TABS -->
+
+                    <div
+                      class="project-tabs"
+                    >
+
+                      <button>
+                        Overview
+                      </button>
+
+                      <button>
+                        Tasks
+                      </button>
+
+                      <button>
+                        Inbox
+                      </button>
+
+                    </div>
+
+
+                    <!-- MILESTONES -->
+
+                    <h4>
+                      Milestones
+                    </h4>
+
+
+                    <div
+                      class="milestone-list"
+                    >
+
+                      ${
+                        project.milestones.length === 0
+
+                          ? `
+                            <p
+                              class="empty-milestones"
+                            >
+                              No milestones yet.
+                            </p>
+                          `
+
+                          : project.milestones
+                              .map(
+                                milestone => `
+
+                                  <div
+                                    class="milestone"
+                                    data-milestone="${milestone.id}"
+                                  >
+
+                                    <label>
+
+                                      <input
+                                        type="checkbox"
+                                        data-project="${project.id}"
+                                        data-id="${milestone.id}"
+
+                                        ${
+                                          milestone.done
+                                            ? "checked"
+                                            : ""
+                                        }
+
+                                        ${
+                                          project.archived
+                                            ? "disabled"
+                                            : ""
+                                        }
+                                      >
+
+                                      <span>
+                                        ${milestone.title}
+                                      </span>
+
+                                    </label>
+
+
+                                    ${
+                                      !project.archived
+
+                                        ? `
+                                          <div
+                                            class="
+                                              milestone-actions
+                                            "
+                                          >
+
+                                            <button
+                                              class="edit-milestone"
+                                              data-project="${project.id}"
+                                              data-id="${milestone.id}"
+                                            >
+                                              Edit
+                                            </button>
+
+
+                                            <button
+                                              class="delete-milestone"
+                                              data-project="${project.id}"
+                                              data-id="${milestone.id}"
+                                            >
+                                              Delete
+                                            </button>
+
+                                          </div>
+                                        `
+
+                                        : ""
+                                    }
+
+                                  </div>
+
+                                `
+                              )
+                              .join("")
+                      }
+
+                    </div>
+
+
+                    ${
+                      !project.archived
+
+                        ? `
+                          <button
+                            class="add-milestone"
+                            data-project="${project.id}"
+                          >
+                            + Add Milestone
+                          </button>
+                        `
+
+                        : ""
+                    }
+
+
                   </div>
+                `
 
-                </div>
-              `
-              : ""
-          }
+                : ""
+            }
 
-        </div>
-      `;
+          </div>
+        `;
 
-    })
-    .join("");
+      })
+      .join("");
 
 
   /*
@@ -188,73 +686,66 @@ function renderList() {
     .querySelectorAll(".project-header")
     .forEach(header => {
 
-      header.addEventListener("click", () => {
+      header.addEventListener(
+        "click",
+        () => {
 
-        const id =
-          Number(header.dataset.id);
+          const id =
+            header.dataset.id;
 
-        openedProject =
-          openedProject === id
-            ? null
-            : id;
+          openedProject =
+            openedProject === id
+              ? null
+              : id;
 
-        renderList();
+          renderList();
 
-      });
+        }
+      );
 
     });
 
 
   /*
-   * MILESTONE CHECKBOXES
+   * EVENT HANDLERS
    */
 
   attachMilestoneEvents();
+
+  attachStatusEvents();
+
+  attachMilestoneManagementEvents();
+
+  attachProjectManagementEvents();
 
 }
 
 
 /*
- * MILESTONE EVENTS
+ * PROJECT FILTERS
  */
 
-function attachMilestoneEvents() {
+function attachProjectFilters() {
 
   document
-    .querySelectorAll(".milestone input")
-    .forEach(box => {
+    .querySelectorAll(".project-filter")
+    .forEach(button => {
 
-      box.addEventListener("change", () => {
+      button.addEventListener(
+        "click",
+        () => {
 
-        const project =
-          state.projects.find(
-            project =>
-              project.id ===
-              Number(box.dataset.project)
+          projectFilter =
+            button.dataset.filter;
+
+          openedProject = null;
+
+          renderProjects(
+            document.getElementById("app")
           );
 
-        if (!project) return;
-
-
-        const milestone =
-          project.milestones.find(
-            milestone =>
-              milestone.id ===
-              Number(box.dataset.id)
-          );
-
-        if (!milestone) return;
-
-
-        milestone.done =
-          box.checked;
-
-
-        saveData(state);
-
-        renderList();
-
-      });
+        }
+      );
 
     });
 
@@ -262,7 +753,772 @@ function attachMilestoneEvents() {
 
 
 /*
- * CALCULATE PROJECT HOURS
+ * PROJECT MANAGEMENT
+ */
+
+function attachProjectManagementEvents() {
+
+
+  /*
+   * NEW PROJECT
+   */
+
+  const addButton =
+    document.getElementById(
+      "addProjectBtn"
+    );
+
+
+  if (addButton) {
+
+    addButton.addEventListener(
+      "click",
+      () => {
+
+        const name =
+          prompt(
+            "Project name:"
+          );
+
+
+        if (
+          !name ||
+          !name.trim()
+        ) {
+
+          return;
+
+        }
+
+
+        const description =
+          prompt(
+            "Project description:"
+          ) || "";
+
+
+        state.projects.push({
+
+          id:
+            crypto.randomUUID(),
+
+          name:
+            name.trim(),
+
+          description:
+            description.trim(),
+
+          status:
+            "Planning",
+
+          archived:
+            false,
+
+          milestones:
+            []
+
+        });
+
+
+        saveData(state);
+
+
+        openedProject = null;
+
+
+        renderProjects(
+          document.getElementById("app")
+        );
+
+      }
+    );
+
+  }
+
+
+  /*
+   * RENAME PROJECT
+   */
+
+  document
+    .querySelectorAll(".edit-project")
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        event => {
+
+          /*
+           * Prevent the click from
+           * affecting the project card.
+           */
+
+          event.stopPropagation();
+
+
+          const project =
+            state.projects.find(
+              project =>
+                project.id ===
+                button.dataset.project
+            );
+
+
+          if (!project) return;
+
+
+          /*
+           * Archived projects are
+           * always read-only.
+           */
+
+          if (project.archived) {
+
+            return;
+
+          }
+
+
+          const newName =
+            prompt(
+              "Rename project:",
+              project.name
+            );
+
+
+          if (
+            !newName ||
+            !newName.trim()
+          ) {
+
+            return;
+
+          }
+
+
+          project.name =
+            newName.trim();
+
+
+          saveData(state);
+
+
+          renderProjects(
+            document.getElementById("app")
+          );
+
+        }
+      );
+
+    });
+
+
+  /*
+   * ARCHIVE PROJECT
+   */
+
+  document
+    .querySelectorAll(".archive-project")
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        event => {
+
+          event.stopPropagation();
+
+
+          const project =
+            state.projects.find(
+              project =>
+                project.id ===
+                button.dataset.project
+            );
+
+
+          if (!project) return;
+
+
+          if (project.archived) {
+
+            return;
+
+          }
+
+
+          const confirmed =
+            confirm(
+              `Archive "${project.name}"?\n\n` +
+              `The project will become read-only ` +
+              `and its history will be preserved.`
+            );
+
+
+          if (!confirmed) return;
+
+
+          project.archived =
+            true;
+
+
+          saveData(state);
+
+
+          openedProject = null;
+
+
+          /*
+           * Move to Archived view
+           * so the user can immediately
+           * see where the project went.
+           */
+
+          projectFilter =
+            "Archived";
+
+
+          renderProjects(
+            document.getElementById("app")
+          );
+
+        }
+      );
+
+    });
+
+
+  /*
+   * RESTORE PROJECT
+   */
+
+  document
+    .querySelectorAll(".restore-project")
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        event => {
+
+          event.stopPropagation();
+
+
+          const project =
+            state.projects.find(
+              project =>
+                project.id ===
+                button.dataset.project
+            );
+
+
+          if (!project) return;
+
+
+          if (!project.archived) {
+
+            return;
+
+          }
+
+
+          /*
+           * Choose destination status.
+           */
+
+          const selectedStatus =
+            prompt(
+              "Restore project as:\n\n" +
+              "Planning\n" +
+              "Active\n" +
+              "Paused\n" +
+              "Completed"
+            );
+
+
+          if (
+            !selectedStatus ||
+            !selectedStatus.trim()
+          ) {
+
+            return;
+
+          }
+
+
+          const normalized =
+            selectedStatus
+              .trim()
+              .toLowerCase();
+
+
+          const validStatuses = [
+            "planning",
+            "active",
+            "paused",
+            "completed"
+          ];
+
+
+          if (
+            !validStatuses.includes(
+              normalized
+            )
+          ) {
+
+            alert(
+              "Invalid status.\n\n" +
+              "Choose Planning, Active, " +
+              "Paused, or Completed."
+            );
+
+            return;
+
+          }
+
+
+          const formattedStatus =
+            normalized
+              .charAt(0)
+              .toUpperCase() +
+            normalized.slice(1);
+
+
+          /*
+           * Final confirmation.
+           */
+
+          const confirmed =
+            confirm(
+              `Restore "${project.name}" ` +
+              `as ${formattedStatus}?\n\n` +
+              `The project will become editable again.`
+            );
+
+
+          if (!confirmed) {
+
+            return;
+
+          }
+
+
+          project.archived =
+            false;
+
+
+          project.status =
+            formattedStatus;
+
+
+          saveData(state);
+
+
+          openedProject = null;
+
+
+          projectFilter =
+            formattedStatus;
+
+
+          renderProjects(
+            document.getElementById("app")
+          );
+
+        }
+      );
+
+    });
+
+}
+
+
+/*
+ * MILESTONE CHECKBOX EVENTS
+ */
+
+function attachMilestoneEvents() {
+
+  document
+    .querySelectorAll(
+      ".milestone input"
+    )
+    .forEach(box => {
+
+      box.addEventListener(
+        "change",
+        () => {
+
+          const project =
+            state.projects.find(
+              project =>
+                project.id ===
+                box.dataset.project
+            );
+
+
+          if (!project) return;
+
+
+          /*
+           * Archived projects are
+           * read-only.
+           */
+
+          if (project.archived) {
+
+            box.checked =
+              box.defaultChecked;
+
+            return;
+
+          }
+
+
+          const milestone =
+            project.milestones.find(
+              milestone =>
+                milestone.id ===
+                Number(
+                  box.dataset.id
+                )
+            );
+
+
+          if (!milestone) return;
+
+
+          milestone.done =
+            box.checked;
+
+
+          saveData(state);
+
+
+          renderList();
+
+        }
+      );
+
+    });
+
+}
+
+
+/*
+ * PROJECT STATUS EVENTS
+ */
+
+function attachStatusEvents() {
+
+  document
+    .querySelectorAll(
+      ".project-status"
+    )
+    .forEach(select => {
+
+      select.addEventListener(
+        "change",
+        () => {
+
+          const project =
+            state.projects.find(
+              project =>
+                project.id ===
+                select.dataset.project
+            );
+
+
+          if (!project) return;
+
+
+          /*
+           * Archived projects cannot
+           * change status.
+           */
+
+          if (project.archived) {
+
+            return;
+
+          }
+
+
+          project.status =
+            select.value;
+
+
+          saveData(state);
+
+
+          renderList();
+
+        }
+      );
+
+    });
+
+}
+
+
+/*
+ * MILESTONE MANAGEMENT
+ */
+
+function attachMilestoneManagementEvents() {
+
+
+  /*
+   * ADD MILESTONE
+   */
+
+  document
+    .querySelectorAll(
+      ".add-milestone"
+    )
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        event => {
+
+          event.stopPropagation();
+
+
+          const project =
+            state.projects.find(
+              project =>
+                project.id ===
+                button.dataset.project
+            );
+
+
+          if (!project) return;
+
+
+          if (project.archived) {
+
+            return;
+
+          }
+
+
+          const title =
+            prompt(
+              "Milestone name:"
+            );
+
+
+          if (
+            !title ||
+            !title.trim()
+          ) {
+
+            return;
+
+          }
+
+
+          const nextId =
+            project.milestones.length > 0
+
+              ? Math.max(
+                  ...project.milestones.map(
+                    milestone =>
+                      milestone.id
+                  )
+                ) + 1
+
+              : 1;
+
+
+          project.milestones.push({
+
+            id:
+              nextId,
+
+            title:
+              title.trim(),
+
+            done:
+              false
+
+          });
+
+
+          saveData(state);
+
+
+          renderList();
+
+        }
+      );
+
+    });
+
+
+  /*
+   * EDIT MILESTONE
+   */
+
+  document
+    .querySelectorAll(
+      ".edit-milestone"
+    )
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        event => {
+
+          event.stopPropagation();
+
+
+          const project =
+            state.projects.find(
+              project =>
+                project.id ===
+                button.dataset.project
+            );
+
+
+          if (!project) return;
+
+
+          if (project.archived) {
+
+            return;
+
+          }
+
+
+          const milestone =
+            project.milestones.find(
+              milestone =>
+                milestone.id ===
+                Number(
+                  button.dataset.id
+                )
+            );
+
+
+          if (!milestone) return;
+
+
+          const newTitle =
+            prompt(
+              "Rename milestone:",
+              milestone.title
+            );
+
+
+          if (
+            !newTitle ||
+            !newTitle.trim()
+          ) {
+
+            return;
+
+          }
+
+
+          milestone.title =
+            newTitle.trim();
+
+
+          saveData(state);
+
+
+          renderList();
+
+        }
+      );
+
+    });
+
+
+  /*
+   * DELETE MILESTONE
+   */
+
+  document
+    .querySelectorAll(
+      ".delete-milestone"
+    )
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        event => {
+
+          event.stopPropagation();
+
+
+          const project =
+            state.projects.find(
+              project =>
+                project.id ===
+                button.dataset.project
+            );
+
+
+          if (!project) return;
+
+
+          if (project.archived) {
+
+            return;
+
+          }
+
+
+          const milestoneId =
+            Number(
+              button.dataset.id
+            );
+
+
+          const milestone =
+            project.milestones.find(
+              milestone =>
+                milestone.id ===
+                milestoneId
+            );
+
+
+          if (!milestone) return;
+
+
+          const confirmed =
+            confirm(
+              `Delete "${milestone.title}"?`
+            );
+
+
+          if (!confirmed) return;
+
+
+          project.milestones =
+            project.milestones.filter(
+              milestone =>
+                milestone.id !==
+                milestoneId
+            );
+
+
+          saveData(state);
+
+
+          renderList();
+
+        }
+      );
+
+    });
+
+}
+
+
+/*
+ * PROJECT HOURS
  */
 
 function getProjectHours(projectId) {
@@ -273,6 +1529,7 @@ function getProjectHours(projectId) {
         project.id === projectId
     );
 
+
   if (!project) return 0;
 
 
@@ -281,8 +1538,8 @@ function getProjectHours(projectId) {
 
       .filter(
         session =>
-          session.project ===
-          project.name
+          session.projectId ===
+          project.id
       )
 
       .reduce(
@@ -298,7 +1555,7 @@ function getProjectHours(projectId) {
 
 
 /*
- * CALCULATE MILESTONE PROGRESS
+ * MILESTONE PROGRESS
  */
 
 function getProgress(project) {
@@ -315,7 +1572,9 @@ function getProgress(project) {
 
 
   if (total === 0) {
+
     return 0;
+
   }
 
 

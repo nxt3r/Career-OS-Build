@@ -2,6 +2,16 @@ import { loadData, saveData } from "./storage.js";
 
 export const state = loadData();
 
+state.projects.forEach(project => {
+
+  if (typeof project.id === "number") {
+
+    project.id = crypto.randomUUID();
+
+  }
+
+});
+
 if (!state.activeTimer) {
   state.activeTimer = null;
 }

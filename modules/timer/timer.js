@@ -32,7 +32,9 @@ export function renderTimer(app) {
   }
 
   const projectOptions = state.projects
-    .map(p => `<option value="${p.name}">${p.name}</option>`)
+    .map(
+      p => `<option value="${p.id}">${p.name}</option>`
+    )
     .join("");
 
   const active = state.activeTimer;
@@ -46,9 +48,12 @@ export function renderTimer(app) {
 
         <h3>Current Session</h3>
 
-        <h1 id="timerDisplay">${formatTime(getElapsed())}</h1>
+        <h1 id="timerDisplay">
+          ${formatTime(getElapsed())}
+        </h1>
 
         <label>Category</label>
+
         <select id="category">
           <option>Deep Work</option>
           <option>Study</option>
@@ -58,21 +63,34 @@ export function renderTimer(app) {
         </select>
 
         <label>Project</label>
+
         <select id="project">
           ${projectOptions}
         </select>
 
         <label>Activity</label>
-        <input id="activity" placeholder="React Components">
+
+        <input
+          id="activity"
+          placeholder="React Components"
+        >
 
         <br><br>
 
         ${
           !active
-            ? `<button id="startBtn">Start Session</button>`
+            ? `
+              <button id="startBtn">
+                Start Session
+              </button>
+            `
             : `
               <button id="pauseBtn">
-                ${active.status === "paused" ? "Resume" : "Pause"}
+                ${
+                  active.status === "paused"
+                    ? "Resume"
+                    : "Pause"
+                }
               </button>
 
               <button id="stopBtn">
@@ -84,116 +102,234 @@ export function renderTimer(app) {
       </div>
 
       <div class="card">
+
         <h3>Today's Sessions</h3>
+
         <div id="sessionList"></div>
+
       </div>
 
     </section>
   `;
 
+  /*
+   * Restore active session information
+   */
+
   if (active) {
-    document.getElementById("category").value = active.category;
-    document.getElementById("project").value = active.project;
-    document.getElementById("activity").value = active.activity;
+
+    document.getElementById("category").value =
+      active.category;
+
+    document.getElementById("project").value =
+      active.projectId;
+
+    document.getElementById("activity").value =
+      active.activity;
+
   }
 
   renderSessions();
+
+  /*
+   * START
+   */
 
   timerControls.start = () => {
 
     if (state.activeTimer) return;
 
+    const projectSelect =
+      document.getElementById("project");
+
+    const selectedProject =
+      state.projects.find(
+        project =>
+          project.id === projectSelect.value
+      );
+
+    if (!selectedProject) return;
+
     const now = Date.now();
 
     state.activeTimer = {
+
       status: "running",
+
       startedAt: now,
+
       originalStart: now,
+
       elapsedBeforeStart: 0,
-      category: document.getElementById("category").value,
-      project: document.getElementById("project").value,
-      activity: document.getElementById("activity").value || "Untitled"
+
+      category:
+        document.getElementById("category").value,
+
+      projectId:
+        selectedProject.id,
+
+      project:
+        selectedProject.name,
+
+      activity:
+        document.getElementById("activity").value ||
+        "Untitled"
+
     };
 
     saveData(state);
+
     renderTimer(timerApp);
 
   };
 
+  /*
+   * PAUSE / RESUME
+   */
+
   timerControls.pauseResume = () => {
 
-    const activeTimer = state.activeTimer;
+    const activeTimer =
+      state.activeTimer;
 
     if (!activeTimer) return;
 
     if (activeTimer.status === "running") {
 
-      activeTimer.elapsedBeforeStart = getElapsed();
+      activeTimer.elapsedBeforeStart =
+        getElapsed();
+
       activeTimer.status = "paused";
+
       activeTimer.startedAt = null;
 
     } else {
 
       activeTimer.status = "running";
-      activeTimer.startedAt = Date.now();
+
+      activeTimer.startedAt =
+        Date.now();
 
     }
 
     saveData(state);
+
     renderTimer(timerApp);
 
   };
 
+  /*
+   * STOP
+   */
+
   timerControls.stop = () => {
 
-    const activeTimer = state.activeTimer;
+    const activeTimer =
+      state.activeTimer;
 
     if (!activeTimer) return;
 
-    const endTime = Date.now();
-    const duration = getElapsed();
+    const endTime =
+      Date.now();
 
-    state.sessions.unshift({
-      category: activeTimer.category,
-      project: activeTimer.project,
-      activity: activeTimer.activity,
-      start: activeTimer.originalStart,
-      end: endTime,
-      duration
-    });
+    const duration =
+      getElapsed();
+
+    const session = {
+
+      category:
+        activeTimer.category,
+
+      projectId:
+        activeTimer.projectId,
+
+      project:
+        activeTimer.project,
+
+      activity:
+        activeTimer.activity,
+
+      start:
+        activeTimer.originalStart,
+
+      end:
+        endTime,
+
+      duration:
+        duration
+
+    };
+
+    state.sessions.unshift(session);
 
     state.activeTimer = null;
 
     saveData(state);
+
     renderTimer(timerApp);
 
   };
 
-  document.getElementById("startBtn")?.addEventListener(
-    "click",
-    timerControls.start
-  );
+  /*
+   * BUTTON EVENTS
+   */
 
-  document.getElementById("pauseBtn")?.addEventListener(
-    "click",
-    timerControls.pauseResume
-  );
+  const startBtn =
+    document.getElementById("startBtn");
 
-  document.getElementById("stopBtn")?.addEventListener(
-    "click",
-    timerControls.stop
-  );
+  if (startBtn) {
 
-  if (state.activeTimer?.status === "running") {
+    startBtn.addEventListener(
+      "click",
+      timerControls.start
+    );
+
+  }
+
+  const pauseBtn =
+    document.getElementById("pauseBtn");
+
+  if (pauseBtn) {
+
+    pauseBtn.addEventListener(
+      "click",
+      timerControls.pauseResume
+    );
+
+  }
+
+  const stopBtn =
+    document.getElementById("stopBtn");
+
+  if (stopBtn) {
+
+    stopBtn.addEventListener(
+      "click",
+      timerControls.stop
+    );
+
+  }
+
+  /*
+   * RUNNING TIMER LOOP
+   */
+
+  if (
+    state.activeTimer &&
+    state.activeTimer.status === "running"
+  ) {
 
     timer = setInterval(() => {
 
       const display =
-        document.getElementById("timerDisplay");
+        document.getElementById(
+          "timerDisplay"
+        );
 
       if (!display) return;
 
-      display.textContent = formatTime(getElapsed());
+      display.textContent =
+        formatTime(getElapsed());
 
     }, 1000);
 
@@ -201,76 +337,176 @@ export function renderTimer(app) {
 
 }
 
+
+/*
+ * CALCULATE CURRENT ELAPSED TIME
+ */
+
 function getElapsed() {
 
-  const active = state.activeTimer;
+  const active =
+    state.activeTimer;
 
-  if (!active) return 0;
+  if (!active) {
+    return 0;
+  }
 
   if (active.status === "paused") {
-    return active.elapsedBeforeStart;
+
+    return active.elapsedBeforeStart || 0;
+
   }
 
   return (
     active.elapsedBeforeStart +
-    (Date.now() - active.startedAt)
+    (
+      Date.now() -
+      active.startedAt
+    )
   );
 
 }
 
-function renderSessions() {
 
-  const list = document.getElementById("sessionList");
-
-  const today = new Date();
-  today.setHours(0,0,0,0);
-
-  const todaySessions = state.sessions.filter(session => {
-
-    const date = new Date(session.start);
-    date.setHours(0,0,0,0);
-
-    return date.getTime() === today.getTime();
-
-  });
-
-  if (todaySessions.length === 0) {
-    list.innerHTML = "No sessions today.";
-    return;
-  }
-
-  list.innerHTML = todaySessions.map(s => `
-    <div class="session">
-      <strong>${s.project}</strong><br>
-      ${s.activity}<br>
-      ${formatDuration(s.duration)}
-    </div>
-  `).join("");
-
-}
+/*
+ * FORMAT TIMER
+ */
 
 function formatTime(ms) {
 
-  const total = Math.floor(ms / 1000);
+  const total =
+    Math.floor(ms / 1000);
 
-  const h = String(Math.floor(total/3600)).padStart(2,"0");
-  const m = String(Math.floor((total%3600)/60)).padStart(2,"0");
-  const s = String(total%60).padStart(2,"0");
+  const h =
+    String(
+      Math.floor(total / 3600)
+    ).padStart(2, "0");
+
+  const m =
+    String(
+      Math.floor(
+        (total % 3600) / 60
+      )
+    ).padStart(2, "0");
+
+  const s =
+    String(
+      total % 60
+    ).padStart(2, "0");
 
   return `${h}:${m}:${s}`;
 
 }
 
+
+/*
+ * TODAY'S SESSIONS
+ */
+
+function renderSessions() {
+
+  const list =
+    document.getElementById(
+      "sessionList"
+    );
+
+  const today =
+    new Date();
+
+  today.setHours(
+    0,
+    0,
+    0,
+    0
+  );
+
+  const todaySessions =
+    state.sessions.filter(
+      session => {
+
+        const sessionDate =
+          new Date(session.start);
+
+        sessionDate.setHours(
+          0,
+          0,
+          0,
+          0
+        );
+
+        return (
+          sessionDate.getTime() ===
+          today.getTime()
+        );
+
+      }
+    );
+
+  if (
+    todaySessions.length === 0
+  ) {
+
+    list.innerHTML =
+      "No sessions today.";
+
+    return;
+
+  }
+
+  list.innerHTML =
+    todaySessions
+      .map(
+        s => `
+          <div class="session">
+
+            <strong>
+              ${s.project}
+            </strong>
+
+            <br>
+
+            ${s.activity}
+
+            <br>
+
+            ${formatDuration(
+              s.duration
+            )}
+
+          </div>
+        `
+      )
+      .join("");
+
+}
+
+
+/*
+ * FORMAT SESSION DURATION
+ */
+
 function formatDuration(ms) {
 
-  const total = Math.floor(ms / 1000);
+  const total =
+    Math.floor(ms / 1000);
 
-  const h = Math.floor(total/3600);
-  const m = Math.floor((total%3600)/60);
-  const s = total%60;
+  const h =
+    Math.floor(total / 3600);
 
-  if (h > 0) return `${h}h ${m}m ${s}s`;
-  if (m > 0) return `${m}m ${s}s`;
+  const m =
+    Math.floor(
+      (total % 3600) / 60
+    );
+
+  const s =
+    total % 60;
+
+  if (h > 0)
+    return `${h}h ${m}m ${s}s`;
+
+  if (m > 0)
+    return `${m}m ${s}s`;
+
   return `${s}s`;
 
 }
