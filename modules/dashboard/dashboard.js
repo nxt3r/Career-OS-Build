@@ -5,122 +5,211 @@ import {
   totalHours
 } from "../../core/utils.js";
 import { saveData } from "../../core/storage.js";
+import {
+  getDeepWorkHours,
+  getTodayDistractionHours,
+  getActiveProjects,
+  getTotalFocusHours,
+  getWeeklyDeepWork,
+  formatHours
+} from "./analytics.js";
 
 export function renderDashboard(app) {
 
   const week = getWeekSessions(state.sessions);
 
   const deep = hoursByCategory(week, "Deep Work");
-  const reels = hoursByCategory(week, "Reels");
-  const tracked = totalHours(week);
+  const weeklyTracked = totalHours(week);
 
   const deepGoal = state.weeklyGoals.deepWork;
-  const reelsLimit = state.weeklyGoals.reelsLimit;
 
   const deepPercent = Math.min((deep / deepGoal) * 100, 100);
-  const reelsPercent = Math.min((reels / reelsLimit) * 100, 100);
+
+  const weeklyDistraction = hoursByCategory(week, "Scrolling");
+
+const distractionLimit = state.weeklyGoals.reelsLimit;
+
+const distractionPercent = Math.min(
+  (weeklyDistraction / distractionLimit) * 100,
+  100
+);
 
   const projectMap = {};
 
-  week.forEach(s => {
-    projectMap[s.project] =
-      (projectMap[s.project] || 0) + s.duration;
-  });
+week.forEach(session => {
 
-  const projects = Object.entries(projectMap)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3);
+  if (!session.projectId) return;
+
+  projectMap[session.projectId] =
+    (projectMap[session.projectId] || 0) +
+    session.duration;
+
+});
+
+const projects = Object.entries(projectMap)
+  .map(([id, time]) => {
+
+    const project = state.projects.find(
+      p => p.id === id
+    );
+
+    return {
+      name: project?.name || "Unknown",
+      time
+    };
+
+  })
+  .sort((a, b) => b.time - a.time)
+  .slice(0, 3);;
+
+  const weeklyDeep =
+  getWeeklyDeepWork();
+
+const weeklyGoal =
+  state.weeklyGoals.deepWork;
+
+const weeklyPercent =
+  Math.min(
+    (weeklyDeep/weeklyGoal)*100,
+    100
+  );
+
+const focusTime =
+  formatHours(getTotalFocusHours());
+
+const activeProjects =
+  getActiveProjects();
+
+const distraction =
+  formatHours(getTodayDistractionHours());
+
+const tracked = formatHours(weeklyTracked);
 
   app.innerHTML = `
+<section>
 
-    <section>
+  <h2>Dashboard</h2>
 
-      <h2>Dashboard</h2>
+  <!-- HERO CARD -->
 
-      <div class="grid">
+  <div class="card hero-card">
 
-        <div class="card">
-          <h3>Deep Work</h3>
-          <h1>${deep}h / ${deepGoal}h</h1>
+    <p class="hero-label">
+      WEEKLY DEEP WORK
+    </p>
 
-          <div class="progress">
-            <div
-              class="fill green"
-              style="width:${deepPercent}%">
-            </div>
-          </div>
-        </div>
+    <h1>
+      ${weeklyDeep.toFixed(1)}h
+      <span>/ ${weeklyGoal}h</span>
+    </h1>
 
-        <div class="card">
-          <h3>Reels Limit</h3>
-          <h1>${reels}h / ${reelsLimit}h</h1>
+    <div class="progress hero-progress">
+      <div
+        class="fill blue"
+        style="width:${weeklyPercent}%"
+      ></div>
+    </div>
 
-          <div class="progress">
-            <div
-              class="fill red"
-              style="width:${reelsPercent}%">
-            </div>
-          </div>
-        </div>
+    <small>
+      ${weeklyPercent.toFixed(0)}% of your weekly goal completed
+    </small>
 
-        <div class="card">
-          <h3>Total Tracked</h3>
-          <h1>${tracked}h</h1>
-          <p>This week</p>
-        </div>
+  </div>
 
-        <div class="card">
-          <h3>Top Projects</h3>
 
-          ${
-            projects.length === 0
-              ? "<p>No sessions yet.</p>"
-              : projects.map(([name, time]) => `
-                  <p>
-                    <strong>${name}</strong><br>
-                    ${(time / 3600000).toFixed(1)}h
-                  </p>
-                `).join("")
-          }
+  <!-- STATS -->
 
-        </div>
+  <div class="grid">
 
-      </div>
+    <div class="card stat-card">
+      <p>Focus Time</p>
+      <h2>${focusTime}</h2>
+      <small>Deep Work + Study</small>
+    </div>
 
-      <div class="card">
+    <div class="card stat-card">
+      <p>Active Projects</p>
+      <h2>${activeProjects}</h2>
+      <small>Currently active</small>
+    </div>
 
-        <h3>Inbox</h3>
+    <div class="card stat-card">
+      <p>Distraction Today</p>
+      <h2>${distraction}</h2>
+      <small>Scrolling + Gaming</small>
+    </div>
 
-<input
-  id="quickCapture"
-  placeholder="What's on your mind?"
->
+    <div class="card stat-card">
+      <p>Total Tracked</p>
+      <h2>${tracked}</h2>
+      <small>This week</small>
+    </div>
 
-<select id="captureProject">
+  </div>
 
-  <option value="">
-    No project
-  </option>
 
-${state.projects
-  .map(project => `
-    <option value="${project.id}">
-      ${project.name}
-    </option>
-  `)
-  .join("")}
-</select>
+  <!-- BOTTOM GRID -->
 
-<button id="saveIdea">
-  Capture
-</button>
+  <div class="grid">
 
-<div id="captureList"></div>
+    <div class="card">
 
-      </div>
+      <h3>Top Projects</h3>
 
-    </section>
-  `;
+      ${
+        projects.length === 0
+          ? "<p>No project sessions yet.</p>"
+          : projects.map(project => `
+              <p>
+                <strong>${project.name}</strong><br>
+                ${(project.time / 3600000).toFixed(1)}h
+              </p>
+            `).join("")
+      }
+
+    </div>
+
+
+    <div class="card">
+
+      <h3>Inbox</h3>
+
+      <input
+        id="quickCapture"
+        placeholder="What's on your mind?"
+      >
+
+      <select id="captureProject">
+
+        <option value="">
+          No project
+        </option>
+
+        ${
+          state.projects
+            .filter(project => !project.archived)
+            .map(project => `
+              <option value="${project.id}">
+                ${project.name}
+              </option>
+            `)
+            .join("")
+        }
+
+      </select>
+
+      <button id="saveIdea">
+        Capture
+      </button>
+
+      <div id="captureList"></div>
+
+    </div>
+
+  </div>
+
+</section>
+`;
 
   renderCaptures();
 
@@ -152,9 +241,7 @@ function saveCapture() {
   if (!text) return;
 
   const projectId =
-    projectSelect.value
-      ? Number(projectSelect.value)
-      : null;
+  projectSelect.value || null;
 
   state.captures.unshift({
 

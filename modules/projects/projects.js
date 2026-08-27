@@ -3,6 +3,7 @@ import { saveData } from "../../core/storage.js";
 
 let openedProject = null;
 let projectFilter = "All";
+let activeProjectTab = {};
 
 
 /*
@@ -529,145 +530,49 @@ function renderList() {
 
                     <!-- PROJECT TABS -->
 
-                    <div
-                      class="project-tabs"
-                    >
+                    <div class="project-tabs">
 
-                      <button>
+                      <button
+                        class="tab-btn ${(!activeProjectTab[project.id] || activeProjectTab[project.id] === "overview") ? "active" : ""}"
+                        data-project="${project.id}"
+                        data-tab="overview"
+                      >
                         Overview
                       </button>
 
-                      <button>
+                      <button
+                        class="tab-btn ${activeProjectTab[project.id] === "tasks" ? "active" : ""}"
+                        data-project="${project.id}"
+                        data-tab="tasks"
+                      >
                         Tasks
                       </button>
 
-                      <button>
+                      <button
+                        class="tab-btn ${activeProjectTab[project.id] === "inbox" ? "active" : ""}"
+                        data-project="${project.id}"
+                        data-tab="inbox"
+                      >
                         Inbox
+                      </button>
+
+                      <button
+                        class="tab-btn ${activeProjectTab[project.id] === "milestones" ? "active" : ""}"
+                        data-project="${project.id}"
+                        data-tab="milestones"
+                      >
+                        Milestones
                       </button>
 
                     </div>
 
 
-                    <!-- MILESTONES -->
+                    <!-- TAB CONTENT -->
 
-                    <h4>
-                      Milestones
-                    </h4>
-
-
-                    <div
-                      class="milestone-list"
-                    >
-
-                      ${
-                        project.milestones.length === 0
-
-                          ? `
-                            <p
-                              class="empty-milestones"
-                            >
-                              No milestones yet.
-                            </p>
-                          `
-
-                          : project.milestones
-                              .map(
-                                milestone => `
-
-                                  <div
-                                    class="milestone"
-                                    data-milestone="${milestone.id}"
-                                  >
-
-                                    <label>
-
-                                      <input
-                                        type="checkbox"
-                                        data-project="${project.id}"
-                                        data-id="${milestone.id}"
-
-                                        ${
-                                          milestone.done
-                                            ? "checked"
-                                            : ""
-                                        }
-
-                                        ${
-                                          project.archived
-                                            ? "disabled"
-                                            : ""
-                                        }
-                                      >
-
-                                      <span>
-                                        ${milestone.title}
-                                      </span>
-
-                                    </label>
-
-
-                                    ${
-                                      !project.archived
-
-                                        ? `
-                                          <div
-                                            class="
-                                              milestone-actions
-                                            "
-                                          >
-
-                                            <button
-                                              class="edit-milestone"
-                                              data-project="${project.id}"
-                                              data-id="${milestone.id}"
-                                            >
-                                              Edit
-                                            </button>
-
-
-                                            <button
-                                              class="delete-milestone"
-                                              data-project="${project.id}"
-                                              data-id="${milestone.id}"
-                                            >
-                                              Delete
-                                            </button>
-
-                                          </div>
-                                        `
-
-                                        : ""
-                                    }
-
-                                  </div>
-
-                                `
-                              )
-                              .join("")
-                      }
-
-                    </div>
-
-
-                    ${
-                      !project.archived
-
-                        ? `
-                          <button
-                            class="add-milestone"
-                            data-project="${project.id}"
-                          >
-                            + Add Milestone
-                          </button>
-                        `
-
-                        : ""
-                    }
-
+                    ${renderProjectTab(project, progress)}
 
                   </div>
                 `
-
                 : ""
             }
 
@@ -677,10 +582,6 @@ function renderList() {
       })
       .join("");
 
-
-  /*
-   * PROJECT EXPAND / COLLAPSE
-   */
 
   document
     .querySelectorAll(".project-header")
@@ -717,6 +618,193 @@ function renderList() {
   attachMilestoneManagementEvents();
 
   attachProjectManagementEvents();
+
+  attachProjectTabEvents();
+
+}
+
+
+function renderProjectTab(project, progress) {
+
+  const tab =
+    activeProjectTab[project.id] || "overview";
+
+
+  if (tab === "tasks") {
+
+    return `
+      <div class="project-tab-panel">
+        <p>
+          ${project.milestones.length > 0
+            ? "Task tracking is available in the milestones view."
+            : "No tasks yet."}
+        </p>
+      </div>
+    `;
+
+  }
+
+
+  if (tab === "inbox") {
+
+  const projectCaptures =
+    (state.captures || [])
+      .filter(
+        capture =>
+          capture.projectId === project.id
+      );
+
+  return `
+    <div class="project-tab-panel">
+
+      ${
+        projectCaptures.length === 0
+
+          ? `
+            <p>
+              Inbox is empty.
+            </p>
+          `
+
+          : `
+            <div class="project-inbox">
+
+              ${projectCaptures
+                .map(capture => `
+                  <div class="capture">
+
+                    <strong>
+                      ${escapeHTML(capture.text)}
+                    </strong>
+
+                    <small>
+                      ${new Date(
+                        capture.createdAt
+                      ).toLocaleString()}
+                    </small>
+
+                  </div>
+                `)
+                .join("")}
+
+            </div>
+          `
+      }
+
+    </div>
+  `;
+
+}
+
+
+  if (tab === "milestones") {
+
+    return `
+      <div class="project-tab-panel">
+        <div class="project-actions">
+          <button
+            class="add-milestone"
+            data-project="${project.id}"
+          >
+            + Add Milestone
+          </button>
+        </div>
+
+        ${project.milestones.length === 0
+          ? `
+            <p>
+              No milestones yet.
+            </p>
+          `
+          : `
+            <ul class="milestone-list">
+              ${project.milestones
+                .map(milestone => `
+                  <li class="milestone">
+                    <label>
+                      <input
+                        type="checkbox"
+                        data-project="${project.id}"
+                        data-id="${milestone.id}"
+                        ${milestone.done ? "checked" : ""}
+                      >
+                      <span>${milestone.title}</span>
+                    </label>
+
+                    <div class="project-actions inline-actions">
+                      <button
+                        class="edit-milestone"
+                        data-project="${project.id}"
+                        data-id="${milestone.id}"
+                      >
+                        Edit
+                      </button>
+
+                      <button
+                        class="delete-milestone"
+                        data-project="${project.id}"
+                        data-id="${milestone.id}"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </li>
+                `)
+                .join("")}
+            </ul>
+          `}
+      </div>
+    `;
+
+  }
+
+
+  return `
+    <div class="project-tab-panel">
+      <p>
+        ${project.description || "No description."}
+      </p>
+
+      <div class="project-overview-stats">
+        <strong>
+          ${project.milestones.length} milestones
+        </strong>
+        <br>
+        <small>
+          ${progress}% complete
+        </small>
+      </div>
+    </div>
+  `;
+
+}
+
+
+function attachProjectTabEvents() {
+
+  document
+    .querySelectorAll(".tab-btn")
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          const projectId =
+            button.dataset.project;
+
+          const tab =
+            button.dataset.tab;
+
+          activeProjectTab[projectId] =
+            tab;
+
+          renderList();
+
+        }
+      );
+
+    });
 
 }
 
@@ -1581,5 +1669,17 @@ function getProgress(project) {
   return Math.round(
     (completed / total) * 100
   );
+
+}
+
+function escapeHTML(text) {
+
+  const div =
+    document.createElement("div");
+
+  div.textContent =
+    text;
+
+  return div.innerHTML;
 
 }

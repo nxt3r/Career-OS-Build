@@ -10,6 +10,11 @@ const timerControls = {
   stop: null
 };
 
+
+/*
+ * KEYBOARD / EXTERNAL CONTROLS
+ */
+
 export function startTimer() {
   timerControls.start?.();
 }
@@ -22,6 +27,11 @@ export function stopTimer() {
   timerControls.stop?.();
 }
 
+
+/*
+ * RENDER TIMER
+ */
+
 export function renderTimer(app) {
 
   timerApp = app;
@@ -32,10 +42,15 @@ export function renderTimer(app) {
   }
 
   const projectOptions = state.projects
-    .map(
-      p => `<option value="${p.id}">${p.name}</option>`
-    )
-    .join("");
+  .filter(project => !project.archived)
+  .map(
+    project => `
+      <option value="${project.id}">
+        ${project.name}
+      </option>
+    `
+  )
+  .join("");
 
   const active = state.activeTimer;
 
@@ -52,30 +67,43 @@ export function renderTimer(app) {
           ${formatTime(getElapsed())}
         </h1>
 
+
         <label>Category</label>
 
         <select id="category">
+
           <option>Deep Work</option>
           <option>Study</option>
-          <option>Reels</option>
+          <option>Scrolling</option>
           <option>Gaming</option>
           <option>Exercise</option>
+
         </select>
+
 
         <label>Project</label>
 
         <select id="project">
+
+          <option value="">
+            No Project
+          </option>
+
           ${projectOptions}
+
         </select>
+
 
         <label>Activity</label>
 
         <input
           id="activity"
-          placeholder="React Components"
+          placeholder="What are you building?"
         >
 
+
         <br><br>
+
 
         ${
           !active
@@ -101,6 +129,7 @@ export function renderTimer(app) {
 
       </div>
 
+
       <div class="card">
 
         <h3>Today's Sessions</h3>
@@ -112,24 +141,145 @@ export function renderTimer(app) {
     </section>
   `;
 
+
   /*
-   * Restore active session information
+   * ELEMENT REFERENCES
+   */
+
+  const categorySelect =
+    document.getElementById("category");
+
+  const projectSelect =
+    document.getElementById("project");
+
+  const activityInput =
+    document.getElementById("activity");
+
+
+  /*
+   * CATEGORY BEHAVIOR
+   */
+
+  function updateCategoryUI() {
+
+    const category =
+      categorySelect.value;
+
+
+    const isDistraction =
+      category === "Scrolling" ||
+      category === "Gaming";
+
+
+    /*
+     * PROJECT
+     *
+     * Distraction sessions cannot
+     * belong to projects.
+     */
+
+    if (isDistraction) {
+
+      projectSelect.value = "";
+      projectSelect.disabled = true;
+
+    } else {
+
+      projectSelect.disabled = false;
+
+    }
+
+
+    /*
+     * ACTIVITY PLACEHOLDER
+     */
+
+    const placeholders = {
+
+      "Deep Work":
+        "What are you building?",
+
+      "Study":
+        "What subject are you studying?",
+
+      "Scrolling":
+        "Which app were you on?",
+
+      "Gaming":
+        "What game are you playing?",
+
+      "Exercise":
+        "What workout are you doing?"
+
+    };
+
+
+    activityInput.placeholder =
+      placeholders[category] ||
+      "What are you doing?";
+
+  }
+
+
+  /*
+   * CATEGORY CHANGE
+   */
+
+  categorySelect.addEventListener(
+    "change",
+    updateCategoryUI
+  );
+
+  activityInput.addEventListener("keydown", event => {
+
+  if (event.key === "Enter" && !state.activeTimer) {
+
+    event.preventDefault();
+    timerControls.start();
+
+  }
+
+});
+
+
+  /*
+   * RESTORE ACTIVE SESSION
    */
 
   if (active) {
 
-    document.getElementById("category").value =
+    categorySelect.value =
       active.category;
 
-    document.getElementById("project").value =
-      active.projectId;
+    if (
+      active.projectId !== null &&
+      active.projectId !== undefined
+    ) {
 
-    document.getElementById("activity").value =
+      projectSelect.value =
+        String(active.projectId);
+
+    } else {
+
+      projectSelect.value = "";
+
+    }
+
+    activityInput.value =
       active.activity;
 
   }
 
+
+  /*
+   * INITIAL CATEGORY STATE
+   */
+
+  updateCategoryUI();
+
+
   renderSessions();
+
 
   /*
    * START
@@ -137,51 +287,56 @@ export function renderTimer(app) {
 
   timerControls.start = () => {
 
-    if (state.activeTimer) return;
+  if (state.activeTimer) return;
 
-    const projectSelect =
-      document.getElementById("project");
+  const category = categorySelect.value;
 
-    const selectedProject =
-      state.projects.find(
-        project =>
-          project.id === projectSelect.value
-      );
+  const isDistraction =
+    category === "Scrolling" ||
+    category === "Gaming";
 
-    if (!selectedProject) return;
+  let selectedProject = null;
 
-    const now = Date.now();
+  // Optional project for non-distraction categories
+  if (!isDistraction && projectSelect.value !== "") {
 
-    state.activeTimer = {
+    const projectId = projectSelect.value;
 
-      status: "running",
+selectedProject = state.projects.find(
+  project => project.id === projectId
+);
 
-      startedAt: now,
+  }
 
-      originalStart: now,
+  const now = Date.now();
 
-      elapsedBeforeStart: 0,
+  state.activeTimer = {
 
-      category:
-        document.getElementById("category").value,
+    status: "running",
 
-      projectId:
-        selectedProject.id,
+    startedAt: now,
 
-      project:
-        selectedProject.name,
+    originalStart: now,
 
-      activity:
-        document.getElementById("activity").value ||
-        "Untitled"
+    elapsedBeforeStart: 0,
 
-    };
+    category,
 
-    saveData(state);
+    projectId: selectedProject?.id ?? null,
 
-    renderTimer(timerApp);
+    project: selectedProject?.name ?? null,
+
+    activity:
+      activityInput.value.trim() || "Untitled"
 
   };
+
+  saveData(state);
+
+  renderTimer(timerApp);
+
+};
+
 
   /*
    * PAUSE / RESUME
@@ -194,29 +349,37 @@ export function renderTimer(app) {
 
     if (!activeTimer) return;
 
-    if (activeTimer.status === "running") {
+
+    if (
+      activeTimer.status === "running"
+    ) {
 
       activeTimer.elapsedBeforeStart =
         getElapsed();
 
-      activeTimer.status = "paused";
+      activeTimer.status =
+        "paused";
 
-      activeTimer.startedAt = null;
+      activeTimer.startedAt =
+        null;
 
     } else {
 
-      activeTimer.status = "running";
+      activeTimer.status =
+        "running";
 
       activeTimer.startedAt =
         Date.now();
 
     }
 
+
     saveData(state);
 
     renderTimer(timerApp);
 
   };
+
 
   /*
    * STOP
@@ -229,11 +392,13 @@ export function renderTimer(app) {
 
     if (!activeTimer) return;
 
+
     const endTime =
       Date.now();
 
     const duration =
       getElapsed();
+
 
     const session = {
 
@@ -260,15 +425,18 @@ export function renderTimer(app) {
 
     };
 
+
     state.sessions.unshift(session);
 
     state.activeTimer = null;
+
 
     saveData(state);
 
     renderTimer(timerApp);
 
   };
+
 
   /*
    * BUTTON EVENTS
@@ -286,6 +454,7 @@ export function renderTimer(app) {
 
   }
 
+
   const pauseBtn =
     document.getElementById("pauseBtn");
 
@@ -298,6 +467,7 @@ export function renderTimer(app) {
 
   }
 
+
   const stopBtn =
     document.getElementById("stopBtn");
 
@@ -309,6 +479,7 @@ export function renderTimer(app) {
     );
 
   }
+
 
   /*
    * RUNNING TIMER LOOP
@@ -351,14 +522,21 @@ function getElapsed() {
     return 0;
   }
 
-  if (active.status === "paused") {
 
-    return active.elapsedBeforeStart || 0;
+  if (
+    active.status === "paused"
+  ) {
+
+    return (
+      active.elapsedBeforeStart ||
+      0
+    );
 
   }
 
+
   return (
-    active.elapsedBeforeStart +
+    (active.elapsedBeforeStart || 0) +
     (
       Date.now() -
       active.startedAt
@@ -377,10 +555,12 @@ function formatTime(ms) {
   const total =
     Math.floor(ms / 1000);
 
+
   const h =
     String(
       Math.floor(total / 3600)
     ).padStart(2, "0");
+
 
   const m =
     String(
@@ -389,10 +569,12 @@ function formatTime(ms) {
       )
     ).padStart(2, "0");
 
+
   const s =
     String(
       total % 60
     ).padStart(2, "0");
+
 
   return `${h}:${m}:${s}`;
 
@@ -410,6 +592,7 @@ function renderSessions() {
       "sessionList"
     );
 
+
   const today =
     new Date();
 
@@ -419,6 +602,7 @@ function renderSessions() {
     0,
     0
   );
+
 
   const todaySessions =
     state.sessions.filter(
@@ -434,6 +618,7 @@ function renderSessions() {
           0
         );
 
+
         return (
           sessionDate.getTime() ===
           today.getTime()
@@ -441,6 +626,7 @@ function renderSessions() {
 
       }
     );
+
 
   if (
     todaySessions.length === 0
@@ -453,6 +639,7 @@ function renderSessions() {
 
   }
 
+
   list.innerHTML =
     todaySessions
       .map(
@@ -460,7 +647,10 @@ function renderSessions() {
           <div class="session">
 
             <strong>
-              ${s.project}
+              ${
+                s.project ||
+                "No Project"
+              }
             </strong>
 
             <br>
@@ -490,22 +680,28 @@ function formatDuration(ms) {
   const total =
     Math.floor(ms / 1000);
 
+
   const h =
     Math.floor(total / 3600);
+
 
   const m =
     Math.floor(
       (total % 3600) / 60
     );
 
+
   const s =
     total % 60;
+
 
   if (h > 0)
     return `${h}h ${m}m ${s}s`;
 
+
   if (m > 0)
     return `${m}m ${s}s`;
+
 
   return `${s}s`;
 

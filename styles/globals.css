@@ -175,3 +175,89 @@ input,select{
 .project-mini-progress small{
   font-size:11px;
 }
+
+/* ===========================
+   DASHBOARD
+=========================== */
+
+.hero-card{
+  background: linear-gradient(135deg,#2563eb,#1d4ed8);
+  color:#fff;
+}
+
+.hero-label{
+  margin:0;
+  opacity:.85;
+  letter-spacing:1px;
+  font-size:.8rem;
+  font-weight:600;
+}
+
+.hero-card h1{
+  margin:.4rem 0;
+}
+
+.hero-card h1 span{
+  font-size:1.1rem;
+  opacity:.8;
+  font-weight:400;
+}
+
+.hero-progress{
+  margin:14px 0;
+}
+
+.stat-card p{
+  margin:0;
+  opacity:.7;
+  font-size:.9rem;
+}
+
+.stat-card h2{
+  margin:8px 0 4px;
+}
+
+.stat-card small{
+  opacity:.7;
+}
+
+.project-tabs{
+  display:flex;
+  gap:8px;
+  margin:16px 0;
+}
+
+.tab-btn{
+  background:#1f2937;
+  border:none;
+  color:#cbd5e1;
+  padding:8px 14px;
+  border-radius:8px;
+  cursor:pointer;
+}
+
+.tab-btn.active{
+  background:#2563eb;
+  color:white;
+}
+
+.overview-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:12px;
+  margin-bottom:16px;
+}
+
+.overview-box{
+  background:#111827;
+  border-radius:10px;
+  padding:12px;
+}
+
+.overview-box small{
+  opacity:.7;
+}
+
+.overview-box h3{
+  margin:6px 0 0;
+}
