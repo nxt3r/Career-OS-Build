@@ -617,8 +617,6 @@ function renderList() {
 
   attachMilestoneManagementEvents();
 
-  attachProjectManagementEvents();
-
   attachProjectTabEvents();
 
 }
@@ -759,23 +757,76 @@ function renderProjectTab(project, progress) {
   }
 
 
-  return `
-    <div class="project-tab-panel">
-      <p>
-        ${project.description || "No description."}
-      </p>
+  const relatedSkills =
+  getRelatedSkills(project.id);
 
-      <div class="project-overview-stats">
-        <strong>
-          ${project.milestones.length} milestones
-        </strong>
-        <br>
-        <small>
-          ${progress}% complete
-        </small>
-      </div>
+return `
+  <div class="project-tab-panel">
+
+    <p>
+      ${project.description || "No description."}
+    </p>
+
+
+    <div class="project-overview-stats">
+
+      <strong>
+        ${project.milestones.length} milestones
+      </strong>
+
+      <br>
+
+      <small>
+        ${progress}% complete
+      </small>
+
     </div>
-  `;
+
+
+    <!-- RELATED SKILLS -->
+
+    <div class="project-skills">
+
+      <h4>
+        Related Skills
+      </h4>
+
+      ${
+        relatedSkills.length === 0
+
+          ? `
+            <p>
+              No related skills yet.
+            </p>
+          `
+
+          : `
+            <ul class="skill-related-projects">
+
+              ${
+                relatedSkills
+                  .map(skill => `
+                    <li>
+                      <strong>
+                        ${escapeHTML(skill.name)}
+                      </strong>
+
+                      <small>
+                        — ${getLevelName(skill.level)}
+                      </small>
+                    </li>
+                  `)
+                  .join("")
+              }
+
+            </ul>
+          `
+      }
+
+    </div>
+
+  </div>
+`;
 
 }
 
@@ -1681,5 +1732,84 @@ function escapeHTML(text) {
     text;
 
   return div.innerHTML;
+
+}
+
+/*
+ * RELATED SKILLS
+ *
+ * Derived from:
+ * 1. Explicit skill → project relationships
+ * 2. Time OS sessions linked to this project + skill
+ *
+ * No duplicate relationship data is stored on projects.
+ */
+
+function getRelatedSkills(projectId) {
+
+  const skillIds = new Set();
+
+
+  /*
+   * EXPLICIT SKILL RELATIONSHIPS
+   */
+
+  state.skills.forEach(skill => {
+
+    if (
+      skill.relatedProjects &&
+      skill.relatedProjects.includes(projectId)
+    ) {
+
+      skillIds.add(skill.id);
+
+    }
+
+  });
+
+
+  /*
+   * TIME OS RELATIONSHIPS
+   */
+
+  state.sessions.forEach(session => {
+
+    if (
+      session.projectId === projectId &&
+      session.skillId
+    ) {
+
+      skillIds.add(session.skillId);
+
+    }
+
+  });
+
+
+  /*
+   * RESOLVE SKILL OBJECTS
+   */
+
+  return state.skills.filter(
+    skill =>
+      skillIds.has(skill.id)
+  );
+
+}
+
+function getLevelName(level) {
+
+  const levels = [
+    "Beginner",
+    "Elementary",
+    "Intermediate",
+    "Advanced",
+    "Expert"
+  ];
+
+  return (
+    levels[level - 1] ||
+    "Unknown"
+  );
 
 }

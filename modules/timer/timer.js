@@ -93,6 +93,27 @@ export function renderTimer(app) {
 
         </select>
 
+        <label>Skill</label>
+
+        <select id="skill">
+
+         <option value="">
+           No Skill
+         </option>
+
+          ${
+           state.skills
+           .map(
+           skill => `
+           <option value="${skill.id}">
+            ${skill.name}
+           </option>
+           `
+           ) 
+           .join("")
+          }
+
+        </select>
 
         <label>Activity</label>
 
@@ -152,6 +173,9 @@ export function renderTimer(app) {
   const projectSelect =
     document.getElementById("project");
 
+  const skillSelect =
+    document.getElementById("skill");
+
   const activityInput =
     document.getElementById("activity");
 
@@ -180,14 +204,18 @@ export function renderTimer(app) {
 
     if (isDistraction) {
 
-      projectSelect.value = "";
-      projectSelect.disabled = true;
+  projectSelect.value = "";
+  projectSelect.disabled = true;
 
-    } else {
+  skillSelect.value = "";
+  skillSelect.disabled = true;
 
-      projectSelect.disabled = false;
+} else {
 
-    }
+  projectSelect.disabled = false;
+  skillSelect.disabled = false;
+
+}
 
 
     /*
@@ -252,21 +280,37 @@ export function renderTimer(app) {
       active.category;
 
     if (
-      active.projectId !== null &&
-      active.projectId !== undefined
-    ) {
+  active.projectId !== null &&
+  active.projectId !== undefined
+) {
 
-      projectSelect.value =
-        String(active.projectId);
+  projectSelect.value =
+    String(active.projectId);
 
-    } else {
+} else {
 
-      projectSelect.value = "";
+  projectSelect.value = "";
 
-    }
+}
 
-    activityInput.value =
-      active.activity;
+
+if (
+  active.skillId !== null &&
+  active.skillId !== undefined
+) {
+
+  skillSelect.value =
+    String(active.skillId);
+
+} else {
+
+  skillSelect.value = "";
+
+}
+
+
+activityInput.value =
+  active.activity;
 
   }
 
@@ -308,6 +352,18 @@ selectedProject = state.projects.find(
 
   }
 
+   let selectedSkill = null;
+
+  if (!isDistraction && skillSelect.value !== "") {
+
+  const skillId = skillSelect.value;
+
+  selectedSkill = state.skills.find(
+    skill => skill.id === skillId
+  );
+
+  }
+
   const now = Date.now();
 
   state.activeTimer = {
@@ -322,12 +378,20 @@ selectedProject = state.projects.find(
 
     category,
 
-    projectId: selectedProject?.id ?? null,
+    projectId:
+  selectedProject?.id ?? null,
 
-    project: selectedProject?.name ?? null,
+project:
+  selectedProject?.name ?? null,
 
-    activity:
-      activityInput.value.trim() || "Untitled"
+skillId:
+  selectedSkill?.id ?? null,
+
+skill:
+  selectedSkill?.name ?? null,
+
+activity:
+  activityInput.value.trim() || "Untitled"
 
   };
 
@@ -410,6 +474,12 @@ selectedProject = state.projects.find(
 
       project:
         activeTimer.project,
+
+      skillId:
+        activeTimer.skillId ?? null,
+
+      skill:
+        activeTimer.skill ?? null,
 
       activity:
         activeTimer.activity,

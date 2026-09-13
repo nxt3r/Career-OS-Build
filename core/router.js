@@ -1,6 +1,7 @@
 import { renderDashboard } from "../modules/dashboard/dashboard.js";
 import { renderTimer } from "../modules/timer/timer.js";
 import { renderProjects } from "../modules/projects/projects.js";
+import { renderSkills } from "../modules/skills/skills.js";
 
 
 export function navigate(page) {
@@ -23,6 +24,10 @@ export function navigate(page) {
             renderProjects(app);
             break;
 
+        case "skills":
+            renderSkills(app);
+            break;    
+            
         default:
             renderDashboard(app);
 

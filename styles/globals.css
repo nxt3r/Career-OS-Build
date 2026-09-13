@@ -261,3 +261,428 @@ input,select{
 .overview-box h3{
   margin:6px 0 0;
 }
+
+/* ===========================
+   TEMP: SKILLS OS (pre-polish)
+=========================== */
+
+.skill-controls{
+  margin-bottom:16px;
+}
+
+.skill-filters{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-bottom:16px;
+}
+
+.skill-filter{
+  width:auto;
+  padding:8px 14px;
+  background:#334155;
+  color:white;
+}
+
+.skill-filter.active{
+  background:#2563eb;
+}
+
+.skill-card{
+  margin-bottom:14px;
+}
+
+.skill-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  cursor:pointer;
+}
+
+.skill-header p{
+  margin:4px 0;
+  opacity:.85;
+}
+
+.skill-right{
+  display:flex;
+  align-items:center;
+}
+
+.expanded-skill{
+  border:1px solid #334155;
+}
+
+.skill-body{
+  border-top:1px solid #334155;
+  margin-top:14px;
+  padding-top:14px;
+}
+
+.skill-section{
+  margin-bottom:20px;
+}
+
+.skill-section h4{
+  margin-bottom:8px;
+}
+
+.skill-progression{
+  background:#111827;
+  border-radius:10px;
+  padding:12px;
+  margin-top:8px;
+}
+
+.skill-level-history{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.level-history-item{
+  background:#111827;
+  border-radius:8px;
+  padding:8px 12px;
+}
+
+.level-history-item p{
+  margin:2px 0;
+  font-size:.85rem;
+}
+
+/* CAPABILITY FRAMEWORK */
+
+.capability-framework{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+.capability-level{
+  background:#111827;
+  border-radius:10px;
+  padding:12px;
+}
+
+.capability-level-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.capability-level-header h5{
+  margin:0;
+}
+
+.capability-progress{
+  font-size:.8rem;
+  opacity:.75;
+}
+
+.capability-empty{
+  opacity:.6;
+  font-size:.85rem;
+  margin:6px 0 0;
+}
+
+.capability-list{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  margin-top:8px;
+}
+
+.capability-item{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background:#1E293B;
+  border-radius:8px;
+  padding:8px 12px;
+  gap:8px;
+}
+
+.capability-content button{
+  width:auto;
+  background:none;
+  padding:0;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  text-align:left;
+}
+
+.capability-check{
+  font-size:1.1rem;
+}
+
+.capability-demonstrated-text{
+  text-decoration:line-through;
+  opacity:.6;
+}
+
+.capability-actions{
+  display:flex;
+  gap:6px;
+  flex-shrink:0;
+}
+
+.capability-actions button{
+  width:auto;
+  padding:6px 10px;
+  background:#334155;
+  color:white;
+  font-size:.8rem;
+}
+
+/* EVIDENCE */
+
+.evidence-list{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.evidence-item{
+  background:#111827;
+  border-radius:10px;
+  padding:12px;
+}
+
+.evidence-item p{
+  margin:4px 0;
+}
+
+.evidence-actions{
+  display:flex;
+  gap:8px;
+  margin-top:8px;
+}
+
+.evidence-actions button{
+  width:auto;
+  padding:6px 10px;
+  background:#334155;
+  color:white;
+  font-size:.8rem;
+}
+
+.skill-actions{
+  display:flex;
+  gap:10px;
+  margin-top:10px;
+}
+
+.skill-actions button{
+  width:auto;
+  padding:8px 14px;
+}
+
+.delete-skill{
+  background:#7f1d1d;
+  color:white;
+}
+
+/* ===========================
+   TEMP: PROJECT LAB ADDITIONS
+=========================== */
+
+.project-filters{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-bottom:16px;
+}
+
+.project-filter{
+  width:auto;
+  padding:8px 14px;
+  background:#334155;
+  color:white;
+}
+
+.project-filter.active{
+  background:#2563eb;
+}
+
+.project-empty{
+  opacity:.6;
+  padding:12px 0;
+}
+
+.archived-project{
+  opacity:.7;
+}
+
+.archived-label{
+  font-size:.75rem;
+  opacity:.7;
+}
+
+.project-status-control{
+  margin:12px 0;
+}
+
+.project-status-control label{
+  display:block;
+  margin-bottom:4px;
+  font-size:.85rem;
+  opacity:.75;
+}
+
+.project-actions{
+  display:flex;
+  gap:8px;
+  margin:10px 0;
+}
+
+.project-actions button{
+  width:auto;
+  padding:8px 14px;
+  background:#334155;
+  color:white;
+}
+
+.archive-project{
+  background:#7f1d1d;
+}
+
+.inline-actions button{
+  padding:4px 10px;
+  font-size:.75rem;
+  margin-left:6px;
+}
+
+.milestone-list{
+  list-style:none;
+  padding:0;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.milestone{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background:#111827;
+  border-radius:8px;
+  padding:8px 12px;
+}
+
+.milestone label{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.project-tab-panel{
+  background:#111827;
+  border-radius:10px;
+  padding:14px;
+  margin-top:10px;
+}
+
+.project-inbox .capture{
+  background:#1E293B;
+  border-radius:8px;
+  padding:10px;
+  margin-bottom:8px;
+}
+
+.project-overview-stats{
+  margin:10px 0;
+}
+
+.project-skills{
+  margin-top:14px;
+}
+
+.skill-related-projects{
+  list-style:none;
+  padding:0;
+}
+
+.skill-related-projects li{
+  background:#111827;
+  border-radius:8px;
+  padding:8px 12px;
+  margin-bottom:6px;
+}
+
+/* ===========================
+   TEMP: PROMOTION REVIEW
+=========================== */
+
+.promotion-review{
+  background:#111827;
+  border-radius:10px;
+  padding:14px;
+}
+
+.promotion-review-list{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  margin:10px 0;
+}
+
+.promotion-review-item{
+  background:#1E293B;
+  border-radius:8px;
+  padding:10px 12px;
+}
+
+.promotion-review-item p{
+  margin:2px 0;
+}
+
+.promotion-review-actions{
+  display:flex;
+  gap:10px;
+  margin-top:10px;
+}
+
+.promotion-review-actions button{
+  width:auto;
+  padding:8px 14px;
+}
+
+.confirm-promotion{
+  background:#166534;
+  color:white;
+}
+
+/* ===========================
+   TEMP: PRACTICE INTELLIGENCE
+=========================== */
+
+.stale-dot{
+  display:inline-block;
+  width:9px;
+  height:9px;
+  border-radius:50%;
+  margin-left:8px;
+  vertical-align:middle;
+}
+
+.stale-yellow{
+  background:#EAB308;
+}
+
+.stale-red{
+  background:#EF4444;
+}
+
+.stale-message{
+  font-weight:600;
+}
+
+.stale-message.stale-yellow{
+  color:#EAB308;
+}
+
+.stale-message.stale-red{
+  color:#EF4444;
+}

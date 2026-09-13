@@ -78,6 +78,13 @@ const defaultData = {
 
   skills: [],
 
+skillCategories: [
+  "Technical",
+  "Creative",
+  "Business",
+  "Other"
+ ],
+
   tasks: [],
 
   weeklyGoals: {
