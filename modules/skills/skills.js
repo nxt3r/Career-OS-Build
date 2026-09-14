@@ -2202,7 +2202,7 @@ function getStatusNumber(status) {
 }
 
 
-function getLevelName(level) {
+export function getLevelName(level) {
 
   return (
     LEVELS[level - 1] ||
@@ -3748,7 +3748,7 @@ function formatSkillPracticeTime(
    CAPABILITY PROGRESS / READINESS
    ========================================================= */
 
-function getCapabilityProgress(
+export function getCapabilityProgress(
   skill,
   level
 ) {

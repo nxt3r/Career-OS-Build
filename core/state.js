@@ -60,6 +60,13 @@ if (!Array.isArray(state.projects)) {
 }
 
 /*
+ * Career Goals
+ */
+if (!Array.isArray(state.careerGoals)) {
+  state.careerGoals = [];
+}
+
+/*
  * Sessions
  */
 if (!Array.isArray(state.sessions)) {
@@ -138,6 +145,36 @@ state.skills.forEach(skill => {
     }
 
   });
+
+});
+
+
+/* ============================================================
+   CAREER GOALS MIGRATION
+   ============================================================ */
+
+/*
+ * Every career goal must have:
+ *
+ * requiredSkillIds
+ * roadmap
+ *
+ * Safely migrate older/incomplete entries.
+ */
+
+state.careerGoals.forEach(goal => {
+
+  if (!Array.isArray(goal.requiredSkillIds)) {
+    goal.requiredSkillIds = [];
+  }
+
+  if (!Array.isArray(goal.roadmap)) {
+    goal.roadmap = [];
+  }
+
+  if (!Array.isArray(goal.relatedProjects)) {
+    goal.relatedProjects = [];
+  }
 
 });
 

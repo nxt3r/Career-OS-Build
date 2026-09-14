@@ -2,6 +2,7 @@ import { renderDashboard } from "../modules/dashboard/dashboard.js";
 import { renderTimer } from "../modules/timer/timer.js";
 import { renderProjects } from "../modules/projects/projects.js";
 import { renderSkills } from "../modules/skills/skills.js";
+import { renderCareer } from "../modules/career/career.js";
 
 
 export function navigate(page) {
@@ -27,7 +28,11 @@ export function navigate(page) {
         case "skills":
             renderSkills(app);
             break;    
-            
+
+        case "career":
+            renderCareer(app);
+            break;
+
         default:
             renderDashboard(app);
 

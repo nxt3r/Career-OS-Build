@@ -78,12 +78,14 @@ const defaultData = {
 
   skills: [],
 
-skillCategories: [
+ skillCategories: [
   "Technical",
   "Creative",
   "Business",
   "Other"
  ],
+
+  careerGoals: [],
 
   tasks: [],
 

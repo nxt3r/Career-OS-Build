@@ -575,6 +575,18 @@ input,select{
   display:flex;
   align-items:center;
   gap:8px;
+  text-align:left;
+  flex:1;
+  min-width:0;
+}
+
+.milestone label span{
+  white-space:normal;
+}
+
+.milestone input[type="checkbox"]{
+  margin:0;
+  flex-shrink:0;
 }
 
 .project-tab-panel{
@@ -685,4 +697,101 @@ input,select{
 
 .stale-message.stale-red{
   color:#EF4444;
+}
+
+/* ===========================
+   TEMP: CAREER OS
+=========================== */
+
+.career-controls{
+  margin-bottom:16px;
+}
+
+.career-goal-card{
+  margin-bottom:14px;
+}
+
+.career-goal-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  cursor:pointer;
+}
+
+.career-goal-header h3{
+  margin:0 0 4px;
+}
+
+.career-goal-body{
+  border-top:1px solid #334155;
+  margin-top:14px;
+  padding-top:14px;
+}
+
+.career-goal-actions{
+  display:flex;
+  gap:10px;
+  margin-top:10px;
+}
+
+.career-goal-actions button{
+  width:auto;
+  padding:8px 14px;
+}
+
+.delete-career-goal{
+  background:#7f1d1d;
+  color:white;
+}
+
+/* ===========================
+   FIX: CHECKBOXES SHOULD NOT
+   INHERIT GLOBAL INPUT STYLING
+=========================== */
+
+input[type="checkbox"]{
+  width:auto;
+  padding:0;
+  margin:0;
+  border-radius:0;
+}
+
+/* ===========================
+   TEMP: CAREER READINESS
+=========================== */
+
+.readiness-list{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.readiness-item{
+  background:#111827;
+  border-radius:10px;
+  padding:12px;
+}
+
+.readiness-item p{
+  margin:4px 0;
+}
+
+.evidence-rollup{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.evidence-rollup-group{
+  background:#111827;
+  border-radius:10px;
+  padding:12px;
+}
+
+/* ===========================
+   TEMP: CAREER RELATED PROJECTS
+=========================== */
+
+.career-goal-body .skill-related-projects small{
+  opacity:.7;
 }

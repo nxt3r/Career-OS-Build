@@ -24,7 +24,7 @@ export function createSidebar() {
       Skills
     </button>
 
-    <button>
+    <button id="navCareer">
       Career
     </button>
 
@@ -58,11 +58,19 @@ export function createSidebar() {
     );
 
 
-  document
+    document
     .getElementById("navSkills")
     .addEventListener(
       "click",
       () => goTo("skills")
+    );
+
+
+  document
+    .getElementById("navCareer")
+    .addEventListener(
+      "click",
+      () => goTo("career")
     );
 
 }

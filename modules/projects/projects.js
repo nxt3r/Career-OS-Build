@@ -147,11 +147,9 @@ export function renderProjects(app) {
   `;
 
 
-  renderList();
+    renderList();
 
   attachProjectFilters();
-
-  attachProjectManagementEvents();
 
 }
 
@@ -583,7 +581,7 @@ function renderList() {
       .join("");
 
 
-  document
+    document
     .querySelectorAll(".project-header")
     .forEach(header => {
 
@@ -618,6 +616,8 @@ function renderList() {
   attachMilestoneManagementEvents();
 
   attachProjectTabEvents();
+
+  attachProjectManagementEvents();
 
 }
 
@@ -1697,7 +1697,7 @@ function getProjectHours(projectId) {
  * MILESTONE PROGRESS
  */
 
-function getProgress(project) {
+export function getProgress(project) {
 
   const total =
     project.milestones.length;
