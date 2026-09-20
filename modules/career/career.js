@@ -666,6 +666,11 @@ function toggleRoadmapStage(box) {
   stage.done =
     box.checked;
 
+  stage.completedAt =
+    box.checked
+      ? Date.now()
+      : null;
+
   saveData(state);
 
   renderGoalList();

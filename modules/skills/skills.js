@@ -2797,6 +2797,11 @@ function toggleCapabilityDemonstrated(
   capability.demonstrated =
     !capability.demonstrated;
 
+  capability.demonstratedAt =
+    capability.demonstrated
+      ? Date.now()
+      : null;
+
   saveData(state);
 
   openedSkill =

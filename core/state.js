@@ -138,10 +138,22 @@ state.skills.forEach(skill => {
    * Older capabilities may not contain
    * demonstrated yet.
    */
-  skill.capabilities.forEach(capability => {
+    skill.capabilities.forEach(capability => {
 
     if (typeof capability.demonstrated !== "boolean") {
       capability.demonstrated = false;
+    }
+
+    if (!("demonstratedAt" in capability)) {
+
+      /*
+       * Same honest caveat as milestones/roadmap
+       * stages: we do NOT backfill a fake date for
+       * already-demonstrated capabilities.
+       */
+
+      capability.demonstratedAt = null;
+
     }
 
   });
@@ -175,6 +187,16 @@ state.careerGoals.forEach(goal => {
   if (!Array.isArray(goal.relatedProjects)) {
     goal.relatedProjects = [];
   }
+
+  goal.roadmap.forEach(stage => {
+
+    if (!("completedAt" in stage)) {
+
+      stage.completedAt = null;
+
+    }
+
+  });
 
 });
 
@@ -256,13 +278,37 @@ state.projects.forEach(project => {
         }
       ];
 
-    } else {
+        } else {
 
       project.milestones = [];
 
     }
 
   }
+
+
+  /*
+   * COMPLETED-AT MIGRATION
+   *
+   * Older milestones may not have a
+   * completedAt timestamp. We do NOT
+   * backfill a fake date for already-done
+   * milestones — their completion time
+   * is genuinely unknown.
+   */
+
+  project.milestones.forEach(milestone => {
+
+    if (!("completedAt" in milestone)) {
+
+      milestone.completedAt =
+        milestone.done
+          ? null
+          : null;
+
+    }
+
+  });
 
 });
 

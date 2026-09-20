@@ -3,6 +3,7 @@ import { renderTimer } from "../modules/timer/timer.js";
 import { renderProjects } from "../modules/projects/projects.js";
 import { renderSkills } from "../modules/skills/skills.js";
 import { renderCareer } from "../modules/career/career.js";
+import { renderReviews } from "../modules/reviews/reviews.js";
 
 
 export function navigate(page) {
@@ -31,6 +32,10 @@ export function navigate(page) {
 
         case "career":
             renderCareer(app);
+            break;
+
+        case "reviews":
+            renderReviews(app);
             break;
 
         default:

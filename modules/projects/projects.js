@@ -1325,8 +1325,13 @@ function attachMilestoneEvents() {
           if (!milestone) return;
 
 
-          milestone.done =
+                    milestone.done =
             box.checked;
+
+           milestone.completedAt =
+            box.checked
+              ? Date.now()
+              : null;
 
 
           saveData(state);
