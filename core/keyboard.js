@@ -96,6 +96,10 @@ if (
       goTo("reviews");
       break;
 
+    case "7":
+      goTo("settings");
+      break;
+
   }
 
 }

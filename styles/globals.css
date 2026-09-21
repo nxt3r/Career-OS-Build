@@ -849,3 +849,11 @@ input[type="checkbox"]{
   height:280px;
   margin-top:10px;
 }
+
+/* ===========================
+   TEMP: SETTINGS
+=========================== */
+
+#categoryList .milestone span{
+  flex:1;
+}

@@ -4,6 +4,7 @@ import { renderProjects } from "../modules/projects/projects.js";
 import { renderSkills } from "../modules/skills/skills.js";
 import { renderCareer } from "../modules/career/career.js";
 import { renderReviews } from "../modules/reviews/reviews.js";
+import { renderSettings } from "../modules/settings/settings.js";
 
 
 export function navigate(page) {
@@ -36,6 +37,10 @@ export function navigate(page) {
 
         case "reviews":
             renderReviews(app);
+            break;
+
+        case "settings":
+            renderSettings(app);
             break;
 
         default:

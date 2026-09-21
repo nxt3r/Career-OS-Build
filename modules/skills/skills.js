@@ -1410,6 +1410,26 @@ function openAddSkillForm() {
     return;
   }
 
+  const trimmedName =
+    name.trim();
+
+  const nameExists =
+    state.skills.some(
+      skill =>
+        skill.name.toLowerCase() ===
+        trimmedName.toLowerCase()
+    );
+
+  if (nameExists) {
+
+    alert(
+      "A skill with this name already exists."
+    );
+
+    return;
+
+  }
+
 
   /*
    * CATEGORY
@@ -1605,7 +1625,7 @@ function openAddSkillForm() {
       crypto.randomUUID(),
 
     name:
-      name.trim(),
+      trimmedName,
 
     category:
       category,
@@ -1687,6 +1707,27 @@ function editSkill(skill) {
     );
 
     return;
+  }
+
+  const trimmedName =
+    name.trim();
+
+  const nameExists =
+    state.skills.some(
+      existingSkill =>
+        existingSkill.id !== skill.id &&
+        existingSkill.name.toLowerCase() ===
+        trimmedName.toLowerCase()
+    );
+
+  if (nameExists) {
+
+    alert(
+      "A skill with this name already exists."
+    );
+
+    return;
+
   }
 
 
@@ -1815,7 +1856,7 @@ function editSkill(skill) {
    */
 
   skill.name =
-    name.trim();
+    trimmedName;
 
   skill.category =
     category;
@@ -2452,6 +2493,9 @@ function addCapability(skill) {
     return;
   }
 
+  const trimmedTitle =
+    title.trim();
+
   const level =
     askCapabilityLevel(
       skill
@@ -2465,13 +2509,31 @@ function addCapability(skill) {
         capability.level === level
     );
 
+  const titleExists =
+    levelCapabilities.some(
+      capability =>
+        capability.title.toLowerCase() ===
+        trimmedTitle.toLowerCase()
+    );
+
+  if (titleExists) {
+
+    alert(
+      "A capability with this name already exists " +
+      "at this level."
+    );
+
+    return;
+
+  }
+
   skill.capabilities.push({
 
     id:
       crypto.randomUUID(),
 
     title:
-      title.trim(),
+      trimmedTitle,
 
     level:
       level,
@@ -2561,6 +2623,9 @@ function editCapability(
     return;
   }
 
+  const trimmedTitle =
+    title.trim();
+
   const oldLevel =
     capability.level;
 
@@ -2571,8 +2636,28 @@ function editCapability(
 
   if (!level) return;
 
+  const titleExists =
+    skill.capabilities.some(
+      existingCapability =>
+        existingCapability.id !== capability.id &&
+        existingCapability.level === level &&
+        existingCapability.title.toLowerCase() ===
+        trimmedTitle.toLowerCase()
+    );
+
+  if (titleExists) {
+
+    alert(
+      "A capability with this name already exists " +
+      "at this level."
+    );
+
+    return;
+
+  }
+
   capability.title =
-    title.trim();
+    trimmedTitle;
 
   capability.level =
     level;

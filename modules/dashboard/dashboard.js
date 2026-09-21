@@ -6,11 +6,10 @@ import {
 } from "../../core/utils.js";
 import { saveData } from "../../core/storage.js";
 import {
-  getDeepWorkHours,
   getTodayDistractionHours,
   getActiveProjects,
-  getTotalFocusHours,
-  getWeeklyDeepWork,
+  getTotalNeutralHours,
+  getWeeklyFocusHours,
   formatHours
 } from "./analytics.js";
 
@@ -21,13 +20,13 @@ export function renderDashboard(app) {
   const deep = hoursByCategory(week, "Deep Work");
   const weeklyTracked = totalHours(week);
 
-  const deepGoal = state.weeklyGoals.deepWork;
+  const deepGoal = state.settings.weeklyTarget;
 
   const deepPercent = Math.min((deep / deepGoal) * 100, 100);
 
   const weeklyDistraction = hoursByCategory(week, "Scrolling");
 
-const distractionLimit = state.weeklyGoals.reelsLimit;
+const distractionLimit = state.settings.distractionLimit;
 
 const distractionPercent = Math.min(
   (weeklyDistraction / distractionLimit) * 100,
@@ -63,10 +62,10 @@ const projects = Object.entries(projectMap)
   .slice(0, 3);;
 
   const weeklyDeep =
-  getWeeklyDeepWork();
+  getWeeklyFocusHours();
 
 const weeklyGoal =
-  state.weeklyGoals.deepWork;
+  state.settings.weeklyTarget;
 
 const weeklyPercent =
   Math.min(
@@ -74,8 +73,8 @@ const weeklyPercent =
     100
   );
 
-const focusTime =
-  formatHours(getTotalFocusHours());
+const neutralTime =
+  formatHours(getTotalNeutralHours());
 
 const activeProjects =
   getActiveProjects();
@@ -94,10 +93,9 @@ const tracked = formatHours(weeklyTracked);
 
   <div class="card hero-card">
 
-    <p class="hero-label">
-      WEEKLY DEEP WORK
+        <p class="hero-label">
+      WEEKLY FOCUS TIME
     </p>
-
     <h1>
       ${weeklyDeep.toFixed(1)}h
       <span>/ ${weeklyGoal}h</span>
@@ -122,21 +120,19 @@ const tracked = formatHours(weeklyTracked);
   <div class="grid">
 
     <div class="card stat-card">
-      <p>Focus Time</p>
-      <h2>${focusTime}</h2>
-      <small>Deep Work + Study</small>
+      <p>Distraction Time</p>
+      <h2>${distraction}</h2>
+    </div>
+
+    <div class="card stat-card">
+      <p>Neutral Time</p>
+      <h2>${neutralTime}</h2>
     </div>
 
     <div class="card stat-card">
       <p>Active Projects</p>
       <h2>${activeProjects}</h2>
       <small>Currently active</small>
-    </div>
-
-    <div class="card stat-card">
-      <p>Distraction Today</p>
-      <h2>${distraction}</h2>
-      <small>Scrolling + Gaming</small>
     </div>
 
     <div class="card stat-card">

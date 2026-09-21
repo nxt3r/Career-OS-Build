@@ -76,9 +76,22 @@ const defaultData = {
 
   ],
 
+    categories: [
+    { id: crypto.randomUUID(), name: "Deep Work", group: "Focus", builtIn: true },
+    { id: crypto.randomUUID(), name: "Study", group: "Focus", builtIn: true },
+    { id: crypto.randomUUID(), name: "Scrolling", group: "Distraction", builtIn: true },
+    { id: crypto.randomUUID(), name: "Gaming", group: "Distraction", builtIn: true },
+    { id: crypto.randomUUID(), name: "Exercise", group: "Neutral", builtIn: true }
+  ],
+
+  settings: {
+    weeklyTarget: 20,
+    distractionLimit: 3
+  },
+
   skills: [],
 
- skillCategories: [
+skillCategories: [
   "Technical",
   "Creative",
   "Business",
@@ -122,5 +135,12 @@ export function saveData(data) {
     KEY,
     JSON.stringify(data)
   );
+
+}
+
+
+export function resetAllData() {
+
+  localStorage.removeItem(KEY);
 
 }

@@ -929,6 +929,26 @@ function attachProjectManagementEvents() {
 
         }
 
+        const trimmedName =
+          name.trim();
+
+        const nameExists =
+          state.projects.some(
+            project =>
+              project.name.toLowerCase() ===
+              trimmedName.toLowerCase()
+          );
+
+        if (nameExists) {
+
+          alert(
+            "A project with this name already exists."
+          );
+
+          return;
+
+        }
+
 
         const description =
           prompt(
@@ -942,7 +962,7 @@ function attachProjectManagementEvents() {
             crypto.randomUUID(),
 
           name:
-            name.trim(),
+            trimmedName,
 
           description:
             description.trim(),
@@ -1034,9 +1054,30 @@ function attachProjectManagementEvents() {
 
           }
 
+          const trimmedNewName =
+            newName.trim();
+
+          const nameExists =
+            state.projects.some(
+              existingProject =>
+                existingProject.id !== project.id &&
+                existingProject.name.toLowerCase() ===
+                trimmedNewName.toLowerCase()
+            );
+
+          if (nameExists) {
+
+            alert(
+              "A project with this name already exists."
+            );
+
+            return;
+
+          }
+
 
           project.name =
-            newName.trim();
+            trimmedNewName;
 
 
           saveData(state);
@@ -1460,6 +1501,27 @@ function attachMilestoneManagementEvents() {
 
           }
 
+          const trimmedTitle =
+            title.trim();
+
+          const titleExists =
+            project.milestones.some(
+              milestone =>
+                milestone.title.toLowerCase() ===
+                trimmedTitle.toLowerCase()
+            );
+
+          if (titleExists) {
+
+            alert(
+              "A milestone with this name already exists " +
+              "on this project."
+            );
+
+            return;
+
+          }
+
 
           const nextId =
             project.milestones.length > 0
@@ -1480,7 +1542,7 @@ function attachMilestoneManagementEvents() {
               nextId,
 
             title:
-              title.trim(),
+              trimmedTitle,
 
             done:
               false
@@ -1563,9 +1625,31 @@ function attachMilestoneManagementEvents() {
 
           }
 
+          const trimmedNewTitle =
+            newTitle.trim();
+
+          const titleExists =
+            project.milestones.some(
+              existingMilestone =>
+                existingMilestone.id !== milestone.id &&
+                existingMilestone.title.toLowerCase() ===
+                trimmedNewTitle.toLowerCase()
+            );
+
+          if (titleExists) {
+
+            alert(
+              "A milestone with this name already exists " +
+              "on this project."
+            );
+
+            return;
+
+          }
+
 
           milestone.title =
-            newTitle.trim();
+            trimmedNewTitle;
 
 
           saveData(state);

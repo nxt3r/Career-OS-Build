@@ -842,6 +842,23 @@ function openAddGoalForm() {
   const trimmedTitle =
     title.trim();
 
+  const titleExists =
+    state.careerGoals.some(
+      goal =>
+        goal.title.toLowerCase() ===
+        trimmedTitle.toLowerCase()
+    );
+
+  if (titleExists) {
+
+    alert(
+      "A career goal with this title already exists."
+    );
+
+    return;
+
+  }
+
 
   const description =
     prompt(
@@ -955,6 +972,27 @@ function editGoal(goal) {
     return;
   }
 
+  const trimmedTitle =
+    title.trim();
+
+  const titleExists =
+    state.careerGoals.some(
+      existingGoal =>
+        existingGoal.id !== goal.id &&
+        existingGoal.title.toLowerCase() ===
+        trimmedTitle.toLowerCase()
+    );
+
+  if (titleExists) {
+
+    alert(
+      "A career goal with this title already exists."
+    );
+
+    return;
+
+  }
+
 
   const description =
     prompt(
@@ -1004,7 +1042,7 @@ function editGoal(goal) {
 
 
   goal.title =
-    title.trim();
+    trimmedTitle;
 
   goal.description =
     description.trim();
@@ -1328,13 +1366,34 @@ function addRoadmapStage(goal) {
     return;
   }
 
+  const trimmedTitle =
+    title.trim();
+
+  const titleExists =
+    goal.roadmap.some(
+      stage =>
+        stage.title.toLowerCase() ===
+        trimmedTitle.toLowerCase()
+    );
+
+  if (titleExists) {
+
+    alert(
+      "A roadmap stage with this name already exists " +
+      "on this goal."
+    );
+
+    return;
+
+  }
+
   goal.roadmap.push({
 
     id:
       crypto.randomUUID(),
 
     title:
-      title.trim(),
+      trimmedTitle,
 
     order:
       goal.roadmap.length + 1,
@@ -1375,8 +1434,30 @@ function editRoadmapStage(goal, stage) {
     return;
   }
 
-  stage.title =
+  const trimmedTitle =
     title.trim();
+
+  const titleExists =
+    goal.roadmap.some(
+      existingStage =>
+        existingStage.id !== stage.id &&
+        existingStage.title.toLowerCase() ===
+        trimmedTitle.toLowerCase()
+    );
+
+  if (titleExists) {
+
+    alert(
+      "A roadmap stage with this name already exists " +
+      "on this goal."
+    );
+
+    return;
+
+  }
+
+  stage.title =
+    trimmedTitle;
 
   saveData(state);
 

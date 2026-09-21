@@ -31,6 +31,10 @@ export function createSidebar() {
     <button id="navReviews">
       Reviews
     </button>
+
+    <button id="navSettings">
+      Settings
+    </button>
   `;
 
 
@@ -74,11 +78,19 @@ export function createSidebar() {
     );
 
 
-   document
+    document
     .getElementById("navReviews")
     .addEventListener(
       "click",
       () => goTo("reviews")
+    );
+
+
+  document
+    .getElementById("navSettings")
+    .addEventListener(
+      "click",
+      () => goTo("settings")
     );
 
 }

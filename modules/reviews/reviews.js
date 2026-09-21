@@ -193,13 +193,27 @@ function renderContent() {
 
   }
 
+    const focusCategoryNames =
+    state.categories
+      .filter(c => c.group === "Focus")
+      .map(c => c.name);
+
+  const distractionCategoryNames =
+    state.categories
+      .filter(c => c.group === "Distraction")
+      .map(c => c.name);
+
   const focusTime =
-    categoryTotals["Deep Work"] +
-    categoryTotals["Study"];
+    focusCategoryNames.reduce(
+      (sum, name) => sum + (categoryTotals[name] || 0),
+      0
+    );
 
   const distraction =
-    categoryTotals["Scrolling"] +
-    categoryTotals["Gaming"];
+    distractionCategoryNames.reduce(
+      (sum, name) => sum + (categoryTotals[name] || 0),
+      0
+    );
 
   container.innerHTML = `
 
@@ -211,7 +225,7 @@ function renderContent() {
       </div>
 
       <div class="card stat-card">
-        <p>Focus Time (Deep Work + Study)</p>
+        <p>Focus Time</p>
         <h2>${formatHours(focusTime)}</h2>
       </div>
 
@@ -399,23 +413,21 @@ function renderCharts(
 
   if (distributionCanvas) {
 
+    const categoryLabels =
+      Object.keys(categoryTotals);
+
     charts.distribution = new Chart(
       distributionCanvas,
       {
         type: "doughnut",
         data: {
-          labels: Object.keys(categoryTotals),
+          labels: categoryLabels,
           datasets: [{
             data:
               Object.values(categoryTotals)
                 .map(ms => +(ms / 3600000).toFixed(2)),
-            backgroundColor: [
-              "#3B82F6",
-              "#A855F7",
-              "#EF4444",
-              "#F97316",
-              "#22C55E"
-            ]
+             backgroundColor:
+              getCategoryColors(categoryLabels)
           }]
         },
         options: {
@@ -761,6 +773,66 @@ function attachReviewEvents() {
 /* =========================================================
    HELPERS
    ========================================================= */
+
+
+
+const BUILT_IN_COLORS = {
+  "Deep Work": "#3B82F6",
+  "Study": "#A855F7",
+  "Scrolling": "#EF4444",
+  "Gaming": "#F97316",
+  "Exercise": "#22C55E"
+};
+
+
+function getCategoryColors(categoryNames) {
+
+  return categoryNames.map(name => {
+
+    if (name in BUILT_IN_COLORS) {
+
+      return BUILT_IN_COLORS[name];
+
+    }
+
+    return hashNameToColor(name);
+
+  });
+
+}
+
+
+function hashNameToColor(name) {
+
+  /*
+   * Deterministic per-name color.
+   *
+   * Same category name always produces the
+   * same hue, regardless of how many other
+   * categories exist or in what order — fixes
+   * the earlier bug where adding a new custom
+   * category shifted the colors of existing ones.
+   */
+
+  let hash = 0;
+
+  for (let i = 0; i < name.length; i++) {
+
+    hash =
+      name.charCodeAt(i) +
+      ((hash << 5) - hash);
+
+    hash |= 0;
+
+  }
+
+  const hue =
+    Math.abs(hash) % 360;
+
+  return `hsl(${hue}, 70%, 55%)`;
+
+}
+
 
 function formatHours(ms) {
 

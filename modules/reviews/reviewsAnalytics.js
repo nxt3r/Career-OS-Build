@@ -132,22 +132,15 @@ export function getSessionsInRange(sessions, range) {
    CATEGORY BREAKDOWN
    ========================================================= */
 
-const CATEGORIES = [
-  "Deep Work",
-  "Study",
-  "Scrolling",
-  "Gaming",
-  "Exercise"
-];
+import { state } from "../../core/state.js";
 
 export function getCategoryTotals(sessions) {
 
   const totals = {};
 
-  CATEGORIES.forEach(category => {
-    totals[category] = 0;
+  state.categories.forEach(category => {
+    totals[category.name] = 0;
   });
-
   sessions.forEach(session => {
 
     if (totals[session.category] !== undefined) {
@@ -473,6 +466,16 @@ function buildYearlyBuckets(sessions, range) {
 
 function summarizeBuckets(sessions, buckets) {
 
+  const focusCategories =
+    state.categories
+      .filter(c => c.group === "Focus")
+      .map(c => c.name);
+
+  const distractionCategories =
+    state.categories
+      .filter(c => c.group === "Distraction")
+      .map(c => c.name);
+
   return buckets.map(bucket => {
 
     const bucketSessions =
@@ -481,8 +484,7 @@ function summarizeBuckets(sessions, buckets) {
     const focusTime =
       bucketSessions
         .filter(s =>
-          s.category === "Deep Work" ||
-          s.category === "Study"
+          focusCategories.includes(s.category)
         )
         .reduce(
           (sum, s) => sum + (Number(s.duration) || 0),
@@ -492,8 +494,7 @@ function summarizeBuckets(sessions, buckets) {
     const distraction =
       bucketSessions
         .filter(s =>
-          s.category === "Scrolling" ||
-          s.category === "Gaming"
+          distractionCategories.includes(s.category)
         )
         .reduce(
           (sum, s) => sum + (Number(s.duration) || 0),

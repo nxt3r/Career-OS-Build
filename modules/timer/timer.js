@@ -1,5 +1,6 @@
 import { state } from "../../core/state.js";
 import { saveData } from "../../core/storage.js";
+import { getCategoryGroup } from "../../core/categories.js";
 
 let timer = null;
 let timerApp = null;
@@ -70,13 +71,15 @@ export function renderTimer(app) {
 
         <label>Category</label>
 
-        <select id="category">
+                <select id="category">
 
-          <option>Deep Work</option>
-          <option>Study</option>
-          <option>Scrolling</option>
-          <option>Gaming</option>
-          <option>Exercise</option>
+          ${
+            state.categories
+              .map(category => `
+                <option>${category.name}</option>
+              `)
+              .join("")
+          }
 
         </select>
 
@@ -191,8 +194,7 @@ export function renderTimer(app) {
 
 
     const isDistraction =
-      category === "Scrolling" ||
-      category === "Gaming";
+      getCategoryGroup(category) === "Distraction";
 
 
     /*
@@ -336,9 +338,7 @@ activityInput.value =
   const category = categorySelect.value;
 
   const isDistraction =
-    category === "Scrolling" ||
-    category === "Gaming";
-
+    getCategoryGroup(category) === "Distraction";
   let selectedProject = null;
 
   // Optional project for non-distraction categories
@@ -725,6 +725,10 @@ function renderSessions() {
 
             <br>
 
+            <small>${escapeHTML(s.category)}</small>
+
+            <br>
+
             ${s.activity}
 
             <br>
@@ -737,6 +741,22 @@ function renderSessions() {
         `
       )
       .join("");
+
+}
+
+
+/*
+ * HTML SAFETY
+ */
+
+function escapeHTML(value) {
+
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 
 }
 

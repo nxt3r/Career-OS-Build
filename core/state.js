@@ -67,6 +67,46 @@ if (!Array.isArray(state.careerGoals)) {
 }
 
 /*
+ * Time Tracking Categories
+ *
+ * Only seeded once. Existing users keep their
+ * current weeklyGoals object untouched — it stays
+ * live until the rest of the app is wired to
+ * settings.weeklyTarget / settings.distractionLimit.
+ */
+if (!Array.isArray(state.categories)) {
+
+  state.categories = [
+    { id: crypto.randomUUID(), name: "Deep Work", group: "Focus", builtIn: true },
+    { id: crypto.randomUUID(), name: "Study", group: "Focus", builtIn: true },
+    { id: crypto.randomUUID(), name: "Scrolling", group: "Distraction", builtIn: true },
+    { id: crypto.randomUUID(), name: "Gaming", group: "Distraction", builtIn: true },
+    { id: crypto.randomUUID(), name: "Exercise", group: "Neutral", builtIn: true }
+  ];
+
+}
+
+/*
+ * Settings
+ */
+if (
+  !state.settings ||
+  typeof state.settings !== "object"
+) {
+
+  state.settings = {
+
+    weeklyTarget:
+      state.weeklyGoals?.deepWork || 20,
+
+    distractionLimit:
+      state.weeklyGoals?.reelsLimit || 3
+
+  };
+
+}
+
+/*
  * Sessions
  */
 if (!Array.isArray(state.sessions)) {

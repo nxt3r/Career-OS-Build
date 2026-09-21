@@ -1,19 +1,28 @@
 import { state } from "../../core/state.js";
+import { getCategoryNamesByGroup } from "../../core/categories.js";
 
 
 /*
- * TOTAL DEEP WORK
+ * TOTAL FOCUS TIME
  *
- * Only actual Deep Work counts.
+ * Focus Time = sum of all sessions whose
+ * category belongs to the "Focus" group,
+ * as defined in Settings.
  */
-export function getDeepWorkHours() {
+export function getTotalFocusHours() {
+
+  const focusCategories =
+    getCategoryNamesByGroup("Focus");
+
 
   const total =
     state.sessions
 
       .filter(
         session =>
-          session.category === "Deep Work"
+          focusCategories.includes(
+            session.category
+          )
       )
 
       .reduce(
@@ -29,17 +38,15 @@ export function getDeepWorkHours() {
 
 
 /*
- * TOTAL FOCUS TIME
+ * TOTAL NEUTRAL TIME
  *
- * Focus Time =
- * Deep Work + Study
+ * Tracked, but counted as neither Focus
+ * nor Distraction.
  */
-export function getTotalFocusHours() {
+export function getTotalNeutralHours() {
 
-  const focusCategories = [
-    "Deep Work",
-    "Study"
-  ];
+  const neutralCategories =
+    getCategoryNamesByGroup("Neutral");
 
 
   const total =
@@ -47,7 +54,7 @@ export function getTotalFocusHours() {
 
       .filter(
         session =>
-          focusCategories.includes(
+          neutralCategories.includes(
             session.category
           )
       )
@@ -82,10 +89,8 @@ export function getTodayDistractionHours() {
   );
 
 
-  const distractionCategories = [
-    "Scrolling",
-    "Gaming"
-  ];
+  const distractionCategories =
+    getCategoryNamesByGroup("Distraction");
 
 
   const total =
@@ -161,7 +166,10 @@ export function formatHours(hours) {
  * WEEKLY DEEP WORK
  */
 
-export function getWeeklyDeepWork() {
+export function getWeeklyFocusHours() {
+
+  const focusCategories =
+    getCategoryNamesByGroup("Focus");
 
   const today = new Date();
 
@@ -186,7 +194,7 @@ export function getWeeklyDeepWork() {
 
         return (
           date >= monday &&
-          session.category === "Deep Work"
+          focusCategories.includes(session.category)
         );
 
       })
