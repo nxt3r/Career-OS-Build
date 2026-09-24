@@ -1,5 +1,21 @@
 import { state } from "../../core/state.js";
 import { saveData, resetAllData } from "../../core/storage.js";
+import { auth } from "../../core/firebase.js";
+import {
+  getUserProfile,
+  changeUsername,
+  updateDisplayName,
+  isValidUsernameFormat,
+  requestAccountDeletion
+} from "../../core/username.js";
+import {
+  isPasswordAccount,
+  reauthenticateWithPassword,
+  reauthenticateWithGoogle,
+  reauthenticateWithGithub,
+  logOutUser,
+  resetPassword
+} from "../../core/auth.js";
 
 const GROUPS = ["Focus", "Distraction", "Neutral"];
 
@@ -8,9 +24,17 @@ const GROUPS = ["Focus", "Distraction", "Neutral"];
    MAIN SETTINGS VIEW
    ========================================================= */
 
-export function renderSettings(app) {
+export async function renderSettings(app) {
 
   if (!app) return;
+
+  const user =
+    auth.currentUser;
+
+  const profile =
+    user
+      ? await getUserProfile(user.uid)
+      : null;
 
   app.innerHTML = `
     <section>
@@ -113,6 +137,23 @@ export function renderSettings(app) {
           accept="application/json"
           style="display:none"
         >
+
+      </div>
+
+
+      <div class="card danger-zone">
+
+        <h3>Danger Zone</h3>
+
+        <p>
+          Deleting your account logs you out immediately.
+          You'll have 30 days to restore it by logging back
+          in before it's permanently deleted.
+        </p>
+
+        <button id="deleteAccountBtn">
+          Delete Account
+        </button>
 
       </div>
 
@@ -506,7 +547,7 @@ function handleImportFile(event) {
   const reader =
     new FileReader();
 
-  reader.onload = () => {
+  reader.onload = async () => {
 
     let parsed;
 
@@ -525,7 +566,7 @@ function handleImportFile(event) {
 
     }
 
-    saveData(parsed);
+    await saveData(parsed);
 
     location.reload();
 
@@ -538,7 +579,7 @@ function handleImportFile(event) {
 }
 
 
-function resetData() {
+async function resetData() {
 
   const confirmation =
     prompt(
@@ -562,7 +603,7 @@ function resetData() {
 
   }
 
-  resetAllData();
+  await resetAllData();
 
   location.reload();
 
@@ -574,6 +615,10 @@ function resetData() {
    ========================================================= */
 
 function attachSettingsEvents() {
+
+  document
+    .getElementById("deleteAccountBtn")
+    .addEventListener("click", showDeleteAccountConfirm);
 
   document
     .getElementById("editWeeklyTarget")
@@ -660,6 +705,364 @@ function handleCategoryListClick(event) {
     deleteCategory(category);
     return;
   }
+
+}
+
+
+/* =========================================================
+   ACCOUNT DELETION
+   ========================================================= */
+
+function showDeleteAccountConfirm() {
+
+  const app =
+    document.getElementById("app");
+
+  const user =
+    auth.currentUser;
+
+  if (!user) return;
+
+  const passwordAccount =
+    isPasswordAccount(user);
+
+  app.innerHTML = `
+
+    <section>
+
+      <h2>Delete Account</h2>
+
+      <div class="card">
+
+        <p>
+          This will schedule your account for permanent
+          deletion in 30 days. You can restore it any time
+          before then by logging back in.
+        </p>
+
+        <div id="deleteAccountError" class="auth-error"></div>
+
+        ${
+          passwordAccount
+            ? `
+              <label>Confirm your password</label>
+              <div class="password-field">
+                <input
+                  type="password"
+                  id="deleteConfirmPassword"
+                  placeholder="••••••••"
+                >
+                <button type="button" class="toggle-password" data-target="deleteConfirmPassword">👁</button>
+              </div>
+
+              <p class="auth-switch">
+                <a href="#" id="deleteForgotPassword">
+                  Forgot password?
+                </a>
+              </p>
+            `
+            : `
+              <p>
+                Click below to confirm your identity via
+                the account you signed up with.
+              </p>
+
+              <button id="deleteReauthProvider">
+                Re-authenticate to Continue
+              </button>
+            `
+        }
+
+        <label>Type your username to confirm</label>
+        <input
+          type="text"
+          id="deleteConfirmUsername"
+          placeholder="Your username"
+        >
+
+        <br><br>
+
+        <button id="deleteAccountConfirm">
+          Permanently Schedule Deletion
+        </button>
+
+        <button id="deleteAccountCancel">
+          Cancel
+        </button>
+
+      </div>
+
+    </section>
+
+  `;
+
+  let reauthed =
+    !passwordAccount
+      ? false
+      : true; // password users reauth at submit time via password field
+
+
+  document
+    .getElementById("deleteAccountCancel")
+    .addEventListener("click", () => {
+
+      renderSettings(app);
+
+    });
+
+  const deleteForgotLink =
+    document.getElementById("deleteForgotPassword");
+
+  if (deleteForgotLink) {
+
+    deleteForgotLink.addEventListener("click", async event => {
+
+      event.preventDefault();
+
+      const errorBox =
+        document.getElementById("deleteAccountError");
+
+      try {
+
+        await resetPassword(user.email);
+
+        errorBox.textContent =
+          "Password reset email sent — check your inbox, " +
+          "then come back here to continue.";
+
+      } catch (error) {
+
+        console.error("Password reset error:", error);
+
+        errorBox.textContent =
+          "Something went wrong. Try again.";
+
+      }
+
+    });
+
+  }
+
+
+  if (!passwordAccount) {
+
+    document
+      .getElementById("deleteReauthProvider")
+      .addEventListener("click", async () => {
+
+        const errorBox =
+          document.getElementById("deleteAccountError");
+
+        try {
+
+          const providerId =
+            user.providerData[0]?.providerId;
+
+          if (providerId === "google.com") {
+
+            await reauthenticateWithGoogle(user);
+
+          } else if (providerId === "github.com") {
+
+            await reauthenticateWithGithub(user);
+
+          } else {
+
+            throw new Error("unsupported-provider");
+
+          }
+
+          reauthed = true;
+
+          errorBox.textContent =
+            "Identity confirmed. You can continue below.";
+
+        } catch (error) {
+
+          console.error("Reauth error:", error);
+
+          errorBox.textContent =
+            "Re-authentication failed. Try again.";
+
+        }
+
+      });
+
+  }
+
+
+  document
+    .getElementById("deleteAccountConfirm")
+    .addEventListener("click", async () => {
+
+      const errorBox =
+        document.getElementById("deleteAccountError");
+
+      const usernameInput =
+        document.getElementById("deleteConfirmUsername");
+
+      errorBox.textContent = "";
+
+      const profile =
+        await getUserProfile(user.uid);
+
+      if (
+        usernameInput.value.trim() !==
+        (profile?.username || "")
+      ) {
+
+        errorBox.textContent =
+          "Username does not match.";
+
+        return;
+
+      }
+
+      try {
+
+        if (passwordAccount) {
+
+          const passwordInput =
+            document.getElementById("deleteConfirmPassword");
+
+          await reauthenticateWithPassword(
+            user,
+            passwordInput.value
+          );
+
+        } else if (!reauthed) {
+
+          errorBox.textContent =
+            "Please re-authenticate first.";
+
+          return;
+
+        }
+
+        await requestAccountDeletion(user.uid);
+
+        await logOutUser();
+
+      } catch (error) {
+
+        console.error("Delete account error:", error);
+
+        errorBox.textContent =
+          "Could not verify your identity. " +
+          "Check your password and try again.";
+
+      }
+
+    });
+
+}
+
+
+/* =========================================================
+   ACCOUNT
+   ========================================================= */
+
+async function editUsername() {
+
+  const user =
+    auth.currentUser;
+
+  if (!user) return;
+
+  const currentProfile =
+    await getUserProfile(user.uid);
+
+  const newUsername =
+    prompt(
+      "Username:",
+      currentProfile?.username || ""
+    );
+
+  if (newUsername === null) return;
+
+  const trimmed =
+    newUsername.trim();
+
+  if (!isValidUsernameFormat(trimmed)) {
+
+    alert(
+      "Username must be 3-20 characters: letters, " +
+      "numbers, and underscores only."
+    );
+
+    return;
+
+  }
+
+  if (trimmed === currentProfile?.username) {
+    return;
+  }
+
+  try {
+
+    await changeUsername(
+      user.uid,
+      currentProfile?.username,
+      trimmed
+    );
+
+    renderSettings(
+      document.getElementById("app")
+    );
+
+  } catch (error) {
+
+    if (error.message === "username-taken") {
+
+      alert("That username is already taken.");
+
+    } else {
+
+      console.error("Username change error:", error);
+
+      alert("Something went wrong. Try again.");
+
+    }
+
+  }
+
+}
+
+
+async function editDisplayName() {
+
+  const user =
+    auth.currentUser;
+
+  if (!user) return;
+
+  const currentProfile =
+    await getUserProfile(user.uid);
+
+  const newName =
+    prompt(
+      "Display name:",
+      currentProfile?.displayName || ""
+    );
+
+  if (newName === null) return;
+
+  const trimmed =
+    newName.trim();
+
+  if (!trimmed) {
+
+    alert("Display name cannot be empty.");
+
+    return;
+
+  }
+
+  await updateDisplayName(user.uid, trimmed);
+
+  renderSettings(
+    document.getElementById("app")
+  );
 
 }
 

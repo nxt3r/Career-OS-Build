@@ -1,146 +1,63 @@
-const KEY = "careerOS";
+import { db } from "./firestore.js";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  deleteDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const defaultData = {
+let currentUid = null;
 
-  sessions: [],
 
-  captures: [],
+export function setCurrentUid(uid) {
 
-  projects: [
-
-    {
-      id: crypto.randomUUID(),
-
-      name: "Career OS",
-
-      description: "Build a personal operating system.",
-
-      status: "Active",
-
-      milestones: [
-
-        {
-          id: 1,
-          title: "Foundation",
-          done: true
-        },
-
-        {
-          id: 2,
-          title: "Time OS",
-          done: true
-        },
-
-        {
-          id: 3,
-          title: "Dashboard",
-          done: true
-        },
-
-        {
-          id: 4,
-          title: "Project Lab",
-          done: false
-        }
-
-      ]
-
-    },
-
-    {
-      id: crypto.randomUUID(),
-
-      name: "Fixtional",
-
-      description: "Remote computer solutions business.",
-
-      status: "Planning",
-
-      milestones: [
-
-        {
-          id: 1,
-          title: "Website",
-          done: false
-        },
-
-        {
-          id: 2,
-          title: "Stripe",
-          done: false
-        }
-
-      ]
-
-    }
-
-  ],
-
-    categories: [
-    { id: crypto.randomUUID(), name: "Deep Work", group: "Focus", builtIn: true },
-    { id: crypto.randomUUID(), name: "Study", group: "Focus", builtIn: true },
-    { id: crypto.randomUUID(), name: "Scrolling", group: "Distraction", builtIn: true },
-    { id: crypto.randomUUID(), name: "Gaming", group: "Distraction", builtIn: true },
-    { id: crypto.randomUUID(), name: "Exercise", group: "Neutral", builtIn: true }
-  ],
-
-  settings: {
-    weeklyTarget: 20,
-    distractionLimit: 3
-  },
-
-  skills: [],
-
-skillCategories: [
-  "Technical",
-  "Creative",
-  "Business",
-  "Other"
- ],
-
-  careerGoals: [],
-
-  tasks: [],
-
-  weeklyGoals: {
-
-    deepWork: 20,
-
-    reelsLimit: 3
-
-  }
-
-};
-
-export function loadData() {
-
-  const raw = localStorage.getItem(KEY);
-
-  if (raw) {
-    return JSON.parse(raw);
-  }
-
-  localStorage.setItem(
-    KEY,
-    JSON.stringify(defaultData)
-  );
-
-  return defaultData;
+  currentUid = uid;
 
 }
 
+
+export async function loadUserData(uid) {
+
+  const snapshot =
+    await getDoc(doc(db, "userData", uid));
+
+  return snapshot.exists()
+    ? snapshot.data()
+    : null;
+
+}
+
+
 export function saveData(data) {
 
-  localStorage.setItem(
-    KEY,
-    JSON.stringify(data)
-  );
+  if (!currentUid) {
+
+    console.error(
+      "saveData called with no active user — write skipped."
+    );
+
+    return Promise.resolve();
+
+  }
+
+  return setDoc(doc(db, "userData", currentUid), data)
+    .catch(error => {
+
+      console.error("Firestore save failed:", error);
+
+    });
 
 }
 
 
 export function resetAllData() {
 
-  localStorage.removeItem(KEY);
+  if (!currentUid) {
+
+    return Promise.resolve();
+
+  }
+
+  return deleteDoc(doc(db, "userData", currentUid));
 
 }

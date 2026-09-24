@@ -9,3 +9,6 @@ node_modules/
 
 # Log files
 *.log
+
+# Admin panel — never publish publicly
+admin/

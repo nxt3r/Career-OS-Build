@@ -1,369 +1,213 @@
-import { loadData, saveData } from "./storage.js";
+import { saveData, loadUserData } from "./storage.js";
 
 /*
  * ============================================================
  * CAREER OS — GLOBAL STATE
  * ============================================================
  *
- * Single source of truth for the application.
+ * state starts empty. initState(uid) populates it once a
+ * user's Firestore document has loaded, then runs the same
+ * migrations that used to run synchronously at import time.
  *
- * Responsibilities:
- * - Load persisted data
- * - Initialize missing collections
- * - Run data migrations
- * - Save migrated state
- *
- * Core principle:
- * UI modules should read/write through state.
- * Do not duplicate persistent data elsewhere.
+ * state is mutated in place (never reassigned), so every
+ * module that already did `import { state } from "./state.js"`
+ * keeps working exactly as before once initState resolves.
  * ============================================================
  */
 
-export const state = loadData() || {};
+export const state = {};
 
 
-/* ============================================================
-   BASE STATE INITIALIZATION
-   ============================================================ */
+export async function initState(uid) {
 
-/*
- * Skills
- */
-if (!Array.isArray(state.skills)) {
-  state.skills = [];
-}
+  const loaded =
+    await loadUserData(uid);
 
-/*
- * Skill categories
- */
-if (!Array.isArray(state.skillCategories)) {
-  state.skillCategories = [
-    "Technical",
-    "Creative",
-    "Business",
-    "Other"
-  ];
-}
+  Object.assign(state, loaded || {});
 
-/*
- * Tasks
- */
-if (!Array.isArray(state.tasks)) {
-  state.tasks = [];
-}
+  runMigrations();
 
-/*
- * Projects
- */
-if (!Array.isArray(state.projects)) {
-  state.projects = [];
-}
+  saveData(state);
 
-/*
- * Career Goals
- */
-if (!Array.isArray(state.careerGoals)) {
-  state.careerGoals = [];
-}
-
-/*
- * Time Tracking Categories
- *
- * Only seeded once. Existing users keep their
- * current weeklyGoals object untouched — it stays
- * live until the rest of the app is wired to
- * settings.weeklyTarget / settings.distractionLimit.
- */
-if (!Array.isArray(state.categories)) {
-
-  state.categories = [
-    { id: crypto.randomUUID(), name: "Deep Work", group: "Focus", builtIn: true },
-    { id: crypto.randomUUID(), name: "Study", group: "Focus", builtIn: true },
-    { id: crypto.randomUUID(), name: "Scrolling", group: "Distraction", builtIn: true },
-    { id: crypto.randomUUID(), name: "Gaming", group: "Distraction", builtIn: true },
-    { id: crypto.randomUUID(), name: "Exercise", group: "Neutral", builtIn: true }
-  ];
+  return state;
 
 }
 
-/*
- * Settings
- */
-if (
-  !state.settings ||
-  typeof state.settings !== "object"
-) {
 
-  state.settings = {
+export function clearState() {
 
-    weeklyTarget:
-      state.weeklyGoals?.deepWork || 20,
-
-    distractionLimit:
-      state.weeklyGoals?.reelsLimit || 3
-
-  };
+  Object.keys(state).forEach(
+    key => delete state[key]
+  );
 
 }
 
-/*
- * Sessions
- */
-if (!Array.isArray(state.sessions)) {
-  state.sessions = [];
-}
 
-/*
- * Captures
- */
-if (!Array.isArray(state.captures)) {
-  state.captures = [];
-}
+function runMigrations() {
 
-/*
- * Active timer
- */
-if (!("activeTimer" in state)) {
-  state.activeTimer = null;
-}
+  /* ============================================================
+     BASE STATE INITIALIZATION
+     ============================================================ */
 
-
-/* ============================================================
-   SKILLS OS — CAPABILITY + EVIDENCE MIGRATION
-   ============================================================ */
-
-/*
- * Every skill must have:
- *
- * capabilities
- * evidence
- * levelHistory
- *
- * Older skills may not have these properties,
- * so we safely migrate them.
- */
-
-state.skills.forEach(skill => {
-
-  /*
-   * Capability Framework
-   */
-  if (!Array.isArray(skill.capabilities)) {
-    skill.capabilities = [];
+  if (!Array.isArray(state.skills)) {
+    state.skills = [];
   }
 
-  /*
-   * Evidence System
-   */
-  if (!Array.isArray(skill.evidence)) {
-    skill.evidence = [];
+  if (!Array.isArray(state.skillCategories)) {
+    state.skillCategories = [
+      "Technical",
+      "Creative",
+      "Business",
+      "Other"
+    ];
   }
 
-  /*
-   * Level History
-   *
-   * Added for Skills OS 3.4.4
-   *
-   * IMPORTANT:
-   * Existing skills receive an empty history.
-   * We do NOT create fake historical promotions.
-   */
-  if (!Array.isArray(skill.levelHistory)) {
-    skill.levelHistory = [];
+  if (!Array.isArray(state.tasks)) {
+    state.tasks = [];
   }
 
-  /*
-   * Capability demonstration state
-   *
-   * Older capabilities may not contain
-   * demonstrated yet.
-   */
+  if (!Array.isArray(state.projects)) {
+    state.projects = [];
+  }
+
+  if (!Array.isArray(state.careerGoals)) {
+    state.careerGoals = [];
+  }
+
+  if (!Array.isArray(state.categories)) {
+
+    state.categories = [
+      { id: crypto.randomUUID(), name: "Deep Work", group: "Focus", builtIn: true },
+      { id: crypto.randomUUID(), name: "Study", group: "Focus", builtIn: true },
+      { id: crypto.randomUUID(), name: "Scrolling", group: "Distraction", builtIn: true },
+      { id: crypto.randomUUID(), name: "Gaming", group: "Distraction", builtIn: true },
+      { id: crypto.randomUUID(), name: "Exercise", group: "Neutral", builtIn: true }
+    ];
+
+  }
+
+  if (
+    !state.settings ||
+    typeof state.settings !== "object"
+  ) {
+
+    state.settings = {
+      weeklyTarget: 20,
+      distractionLimit: 3
+    };
+
+  }
+
+  if (!Array.isArray(state.sessions)) {
+    state.sessions = [];
+  }
+
+  if (!Array.isArray(state.captures)) {
+    state.captures = [];
+  }
+
+  if (!("activeTimer" in state)) {
+    state.activeTimer = null;
+  }
+
+
+  /* ============================================================
+     SKILLS OS — CAPABILITY + EVIDENCE MIGRATION
+     ============================================================ */
+
+  state.skills.forEach(skill => {
+
+    if (!Array.isArray(skill.capabilities)) {
+      skill.capabilities = [];
+    }
+
+    if (!Array.isArray(skill.evidence)) {
+      skill.evidence = [];
+    }
+
+    if (!Array.isArray(skill.levelHistory)) {
+      skill.levelHistory = [];
+    }
+
+    if (!Array.isArray(skill.relatedProjects)) {
+      skill.relatedProjects = [];
+    }
+
     skill.capabilities.forEach(capability => {
 
-    if (typeof capability.demonstrated !== "boolean") {
-      capability.demonstrated = false;
+      if (typeof capability.demonstrated !== "boolean") {
+        capability.demonstrated = false;
+      }
+
+      if (!("demonstratedAt" in capability)) {
+        capability.demonstratedAt = null;
+      }
+
+    });
+
+  });
+
+
+  /* ============================================================
+     CAREER GOALS MIGRATION
+     ============================================================ */
+
+  state.careerGoals.forEach(goal => {
+
+    if (!Array.isArray(goal.requiredSkillIds)) {
+      goal.requiredSkillIds = [];
     }
 
-    if (!("demonstratedAt" in capability)) {
+    if (!Array.isArray(goal.roadmap)) {
+      goal.roadmap = [];
+    }
 
-      /*
-       * Same honest caveat as milestones/roadmap
-       * stages: we do NOT backfill a fake date for
-       * already-demonstrated capabilities.
-       */
+    if (!Array.isArray(goal.relatedProjects)) {
+      goal.relatedProjects = [];
+    }
 
-      capability.demonstratedAt = null;
+    goal.roadmap.forEach(stage => {
 
+      if (!("completedAt" in stage)) {
+        stage.completedAt = null;
+      }
+
+    });
+
+  });
+
+
+  /* ============================================================
+     PROJECT ID MIGRATION
+     ============================================================ */
+
+  state.projects.forEach(project => {
+
+    if (typeof project.id === "number") {
+      project.id = crypto.randomUUID();
     }
 
   });
 
-});
 
+  /* ============================================================
+     PROJECT MILESTONES
+     ============================================================ */
 
-/* ============================================================
-   CAREER GOALS MIGRATION
-   ============================================================ */
+  state.projects.forEach(project => {
 
-/*
- * Every career goal must have:
- *
- * requiredSkillIds
- * roadmap
- *
- * Safely migrate older/incomplete entries.
- */
-
-state.careerGoals.forEach(goal => {
-
-  if (!Array.isArray(goal.requiredSkillIds)) {
-    goal.requiredSkillIds = [];
-  }
-
-  if (!Array.isArray(goal.roadmap)) {
-    goal.roadmap = [];
-  }
-
-  if (!Array.isArray(goal.relatedProjects)) {
-    goal.relatedProjects = [];
-  }
-
-  goal.roadmap.forEach(stage => {
-
-    if (!("completedAt" in stage)) {
-
-      stage.completedAt = null;
-
-    }
-
-  });
-
-});
-
-
-/* ============================================================
-   PROJECT ID MIGRATION
-   ============================================================ */
-
-/*
- * Older versions of Career OS used numeric project IDs.
- *
- * Convert them to UUIDs so IDs are consistent.
- */
-
-state.projects.forEach(project => {
-
-  if (typeof project.id === "number") {
-    project.id = crypto.randomUUID();
-  }
-
-});
-
-
-/* ============================================================
-   DEVELOPMENT DATA — PROJECT MILESTONES
-   ============================================================ */
-
-/*
- * Existing projects may not have milestone data.
- *
- * Add the structure without deleting:
- * - existing projects
- * - sessions
- * - captures
- * - other project data
- */
-
-state.projects.forEach(project => {
-
-  if (!Array.isArray(project.milestones)) {
-
-    if (project.name === "Career OS") {
-
-      project.milestones = [
-        {
-          id: 1,
-          title: "Foundation",
-          done: true
-        },
-        {
-          id: 2,
-          title: "Time OS",
-          done: true
-        },
-        {
-          id: 3,
-          title: "Dashboard",
-          done: true
-        },
-        {
-          id: 4,
-          title: "Project Lab",
-          done: false
-        }
-      ];
-
-    } else if (project.name === "Fixtional") {
-
-      project.milestones = [
-        {
-          id: 1,
-          title: "Website",
-          done: false
-        },
-        {
-          id: 2,
-          title: "Stripe",
-          done: false
-        }
-      ];
-
-        } else {
-
+    if (!Array.isArray(project.milestones)) {
       project.milestones = [];
-
     }
 
-  }
+    project.milestones.forEach(milestone => {
 
+      if (!("completedAt" in milestone)) {
+        milestone.completedAt = null;
+      }
 
-  /*
-   * COMPLETED-AT MIGRATION
-   *
-   * Older milestones may not have a
-   * completedAt timestamp. We do NOT
-   * backfill a fake date for already-done
-   * milestones — their completion time
-   * is genuinely unknown.
-   */
-
-  project.milestones.forEach(milestone => {
-
-    if (!("completedAt" in milestone)) {
-
-      milestone.completedAt =
-        milestone.done
-          ? null
-          : null;
-
-    }
+    });
 
   });
 
-});
-
-
-/* ============================================================
-   SAVE MIGRATED STATE
-   ============================================================ */
-
-/*
- * This makes all migrations persistent.
- *
- * Example:
- * An old skill gets levelHistory = []
- * → saveData()
- * → next page load keeps the new structure.
- */
-
-saveData(state);
+}

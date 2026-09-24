@@ -12,9 +12,17 @@
 </head>
 <body>
 
-  <aside id="sidebar"></aside>
+  <div id="loadingScreen" class="loading-screen">
+    <div class="spinner"></div>
+  </div>
 
-  <main id="app"></main>
+  <div id="authScreen" style="display:none;"></div>
+
+  <aside id="sidebar" style="display:none;"></aside>
+
+  <div id="profileCorner" style="display:none;"></div>
+
+  <main id="app" style="display:none;"></main>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
     <script type="module" src="core/app.js"></script>
